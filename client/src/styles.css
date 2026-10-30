@@ -29,3 +29,4 @@ small { font-weight: 400; }
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 12px 0 18px; }
 .facts dt { color: var(--muted); } .facts dd { margin: 0; }
 a.route { color: inherit; text-decoration: none; }
+.danger { background: #fff; color: var(--red); border: 1px solid var(--red); margin-top: 10px; }
