@@ -67,7 +67,8 @@ Check the box when it is merged to `main`.
 - [ ] Real database on Supabase so data doesn't disappear (Joshua)
 - [ ] Put the app on the internet at a public link (Joshua)
 - [ ] Real sign-in emails instead of the console, resend button, countdown (Aaron)
-- [ ] Trip detail page, my trips page, cancel a trip (Azra)
+- [x] Trip detail page, my trips page, cancel a trip (Azra)
+- [x] Request a seat, no double-booking the last seat (Azra)
 - [ ] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [ ] Driver application and admin approval, Cucumber tests (Anthony)
 - [ ] Matching rules spec and a tested matching function (Abuchi)
@@ -77,7 +78,6 @@ Check the box when it is merged to `main`.
 - [ ] Register our presentation timeslot (Abuchi, today)
 
 **After the midterm (Nov 9 to Dec 6)**
-- [ ] Request and reserve a seat (no double-booking the last seat)
 - [ ] Shared Uber groups of up to 4 when no driver matches
 - [ ] Fare split screen showing what each person owes
 - [ ] Live updates when a group fills or someone drops (Socket.IO)
@@ -145,7 +145,10 @@ docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 | GET | `/pickup-spots` | | Campus spots used by the stubbed address search |
 | GET | `/trips` | | Upcoming trips |
 | POST | `/trips` | `{ origin, destination, departsAt, seats, pricePerSeatCents?, notes? }` | `origin`/`destination` are `{ label, lat, lng }` |
-| GET | `/trips/:id` | | |
+| GET | `/trips/mine` | | Trips I posted |
+| GET | `/trips/:id` | | Includes `seatsLeft` and `joined` |
+| POST | `/trips/:id/request` | | Reserve a seat. 409 when full, already joined, or your own trip |
+| DELETE | `/trips/:id` | | Poster only |
 
 ## How we work
 
