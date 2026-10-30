@@ -1,0 +1,13 @@
+{
+  "name": "ruthere",
+  "private": true,
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,magenta \"npm run dev -w server\" \"npm run dev -w client\"",
+    "test": "npm test -w server",
+    "db:schema": "psql \"$DATABASE_URL\" -f server/src/db/schema.sql"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
