@@ -34,7 +34,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={user ? <Navigate to="/trips" /> : <SignIn onSignedIn={setUser} />} />
           <Route path="/trips" element={user ? <Trips /> : <Navigate to="/" />} />
-          <Route path="/trips/:id" element={user ? <TripDetail user={user} /> : <Navigate to="/" />} />
+          <Route path="/trips/:id" element={user ? <TripDetail user={user} onUserChange={setUser} /> : <Navigate to="/" />} />
           <Route path="/my-trips" element={user ? <MyTrips /> : <Navigate to="/" />} />
           <Route path="/post" element={user ? <PostTrip /> : <Navigate to="/" />} />
         </Routes>

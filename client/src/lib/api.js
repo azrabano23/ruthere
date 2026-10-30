@@ -24,5 +24,8 @@ export const api = {
   trip: (id) => call(`/trips/${id}`),
   myTrips: () => call('/trips/mine'),
   requestSeat: (id) => call(`/trips/${id}/request`, { method: 'POST' }),
+  giveUpSeat: (id) => call(`/trips/${id}/request`, { method: 'DELETE' }),
+  safetyResources: () => call('/safety/resources'),
+  safetyAlert: (body) => call('/safety/alert', { method: 'POST', body }),
   cancelTrip: (id) => call(`/trips/${id}`, { method: 'DELETE' }),
 };

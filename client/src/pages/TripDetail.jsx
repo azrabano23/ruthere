@@ -1,14 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
+import SafetyPanel from '../components/SafetyPanel.jsx';
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
-export default function TripDetail({ user }) {
+export default function TripDetail({ user, onUserChange }) {
   const { id } = useParams();
   const [trip, setTrip] = useState(undefined);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+
+  async function giveUpSeat() {
+    if (!confirm('Give up your seat? Someone else can take it.')) return;
+    setBusy(true); setMsg('');
+    try {
+      const { seatsLeft } = await api.giveUpSeat(trip.id);
+      setTrip({ ...trip, joined: false, seatsLeft });
+      setMsg('You gave up your seat.');
+    } catch (err) { setMsg(err.message); } finally { setBusy(false); }
+  }
 
   async function requestSeat() {
     setBusy(true); setMsg('');
@@ -41,9 +52,13 @@ export default function TripDetail({ user }) {
         {trip.notes && <><dt>Notes</dt><dd>{trip.notes}</dd></>}
       </dl>
       {!mine && !trip.joined && <button disabled={busy || trip.seatsLeft <= 0} onClick={requestSeat}>{trip.seatsLeft <= 0 ? 'Trip is full' : 'Request a seat'}</button>}
-      {!mine && trip.joined && <p><strong>You have a seat on this trip.</strong></p>}
+      {!mine && trip.joined && (<>
+        <p><strong>You have a seat on this trip.</strong></p>
+        <button className="danger" disabled={busy} onClick={giveUpSeat}>Give up my seat</button>
+      </>)}
       {mine && <Link className="button" to="/my-trips">Manage in My trips</Link>}
       {msg && <p className="muted">{msg}</p>}
+      {(mine || trip.joined) && <SafetyPanel trip={trip} user={user} onUserChange={onUserChange} />}
     </section>
   );
 }

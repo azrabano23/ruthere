@@ -29,3 +29,21 @@ describe('last-seat race', () => {
     expect(await store.reservations.countForTrip(posted.id)).toBe(1);
   });
 });
+
+describe('giving up a seat', () => {
+  it('frees the seat for the next rider', async () => {
+    delete process.env.DATABASE_URL;
+    const store = await createStore();
+    const driver = await store.users.create({ email: 'd@rutgers.edu' });
+    const a = await store.users.create({ email: 'a@rutgers.edu' });
+    const b = await store.users.create({ email: 'b@rutgers.edu' });
+    const posted = await store.trips.create({ posterId: driver.id, origin: { label: 'CASC', lat: 0, lng: 0 }, destination: { label: 'BSC', lat: 1, lng: 1 }, departsAt: new Date(Date.now() + 3600_000).toISOString(), seats: 1, pricePerSeatCents: null, notes: '' });
+
+    expect((await store.reservations.reserve(posted.id, a.id)).ok).toBeTrue();
+    expect((await store.reservations.reserve(posted.id, b.id)).reason).toBe('full');
+    expect(await store.reservations.release(posted.id, a.id)).toBeTrue();
+    expect(await store.reservations.release(posted.id, a.id)).toBeFalse(); // already gone
+    expect((await store.reservations.reserve(posted.id, b.id)).ok).toBeTrue();
+    expect(await store.reservations.countForTrip(posted.id)).toBe(1);
+  });
+});

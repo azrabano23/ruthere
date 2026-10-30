@@ -69,6 +69,8 @@ Check the box when it is merged to `main`.
 - [ ] Real sign-in emails instead of the console, resend button, countdown (Aaron)
 - [x] Trip detail page, my trips page, cancel a trip (Azra)
 - [x] Request a seat, no double-booking the last seat (Azra)
+- [x] Give up your seat (Azra)
+- [x] Emergency button: hold 2s, 5s to cancel, opens 911, alerts your emergency contact with location, RUPD resources (Azra)
 - [ ] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [ ] Driver application and admin approval, Cucumber tests (Anthony)
 - [ ] Matching rules spec and a tested matching function (Abuchi)
@@ -82,7 +84,7 @@ Check the box when it is merged to `main`.
 - [ ] Fare split screen showing what each person owes
 - [ ] Live updates when a group fills or someone drops (Socket.IO)
 - [ ] Leave a group, strikes for late cancels
-- [ ] Emergency button
+- [ ] Emergency alert by real SMS (needs Twilio or similar), verify RUPD numbers with the department
 - [ ] Message your group, report or block a user
 - [ ] Test with real students and fix what breaks
 - [ ] Final demo: one full pooled ride, live
@@ -91,7 +93,8 @@ Check the box when it is merged to `main`.
 
 - **Sign in with a Rutgers email.** Six-digit one-time code, 10-minute expiry, locks after 5 wrong tries, non-Rutgers emails rejected.
 - **Post a trip.** Pickup, destination, departure time, open seats, optional price per seat. Validated server-side (different endpoints, 10 minutes to 2 weeks out, 1 to 7 seats).
-- **Trip list.** Upcoming trips, soonest first.
+- **Trip list, trip detail, my trips.** Request a seat (exactly one rider can win the last seat), give it up, cancel a trip you posted.
+- **Safety.** On every trip you're on: 911 and RUPD one tap away, and an emergency button that you hold for 2 seconds, with 5 seconds to cancel, which sends your live location and trip details to your emergency contact and opens the dialer with 911.
 - **Address search.** Google Places Autocomplete when a key is set, otherwise a built-in list of the campus pickup spots from the proposal.
 
 Matching, groups, fare split and the emergency button are the Nov 9 to 22 phase. The schema already has the tables they need, and `splitFareCents` is in place and tested.
@@ -140,7 +143,7 @@ docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 | POST | `/auth/request-code` | `{ email }` | Rutgers domains only |
 | POST | `/auth/verify` | `{ email, code }` | Sets an httpOnly session cookie, returns `{ user, isNew }` |
 | GET | `/auth/me` | | Current user |
-| PATCH | `/auth/me` | `{ displayName, paymentHandle }` | |
+| PATCH | `/auth/me` | `{ displayName, paymentHandle, emergencyContactName, emergencyContactPhone }` | |
 | POST | `/auth/signout` | | |
 | GET | `/pickup-spots` | | Campus spots used by the stubbed address search |
 | GET | `/trips` | | Upcoming trips |
@@ -148,7 +151,10 @@ docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 | GET | `/trips/mine` | | Trips I posted |
 | GET | `/trips/:id` | | Includes `seatsLeft` and `joined` |
 | POST | `/trips/:id/request` | | Reserve a seat. 409 when full, already joined, or your own trip |
+| DELETE | `/trips/:id/request` | | Give up my seat |
 | DELETE | `/trips/:id` | | Poster only |
+| GET | `/safety/resources` | | 911, RUPD, Rutgers public safety |
+| POST | `/safety/alert` | `{ tripId?, location? }` | Sends trip + location to the user's emergency contact |
 
 ## How we work
 
