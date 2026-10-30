@@ -24,3 +24,8 @@ export function splitFareCents(totalCents, n) {
   const rem = totalCents - base * n;
   return Array.from({ length: n }, (_, i) => base + (i < rem ? 1 : 0));
 }
+
+/** Only the student who posted a trip may cancel it. */
+export function canCancel(trip, user) {
+  return Boolean(trip && user && trip.posterId === user.id);
+}

@@ -1,4 +1,4 @@
-import { validateTrip, splitFareCents } from '../src/lib/trips.js';
+import { validateTrip, splitFareCents, canCancel } from '../src/lib/trips.js';
 
 const now = Date.parse('2026-11-06T13:00:00Z');
 const casc = { label: 'College Ave Student Center', lat: 40.503, lng: -74.4516 };
@@ -23,4 +23,11 @@ describe('fare split', () => {
     expect(shares).toEqual([334, 333, 333]);
     expect(shares.reduce((a, b) => a + b, 0)).toBe(1000);
   });
+});
+
+describe('cancel permission', () => {
+  const trip = { id: 't1', posterId: 'u1' };
+  it('lets the poster cancel', () => expect(canCancel(trip, { id: 'u1' })).toBeTrue());
+  it('blocks everyone else', () => expect(canCancel(trip, { id: 'u2' })).toBeFalse());
+  it('handles missing trip or user', () => { expect(canCancel(null, { id: 'u1' })).toBeFalse(); expect(canCancel(trip, null)).toBeFalse(); });
 });

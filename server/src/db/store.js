@@ -27,6 +27,8 @@ function memoryStore() {
       async create(t) { const trip = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), ...t }; trips.set(trip.id, trip); return trip; },
       async findById(id) { return trips.get(id) ?? null; },
       async listUpcoming() { const now = Date.now(); return [...trips.values()].filter((t) => Date.parse(t.departsAt) > now).sort((a, b) => Date.parse(a.departsAt) - Date.parse(b.departsAt)); },
+      async listByPoster(posterId) { return [...trips.values()].filter((t) => t.posterId === posterId).sort((a, b) => Date.parse(a.departsAt) - Date.parse(b.departsAt)); },
+      async delete(id) { return trips.delete(id); },
     },
   };
 }
@@ -69,6 +71,8 @@ async function pgStore(connectionString) {
       },
       async findById(id) { return tripRow((await pool.query('select * from trips where id=$1', [id])).rows[0]); },
       async listUpcoming() { return (await pool.query('select * from trips where departs_at > now() order by departs_at asc limit 100')).rows.map(tripRow); },
+      async listByPoster(posterId) { return (await pool.query('select * from trips where poster_id=$1 order by departs_at asc', [posterId])).rows.map(tripRow); },
+      async delete(id) { return (await pool.query('delete from trips where id=$1', [id])).rowCount > 0; },
     },
   };
 }
