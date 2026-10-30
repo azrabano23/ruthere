@@ -33,7 +33,8 @@ export function tripsRouter(store) {
     try {
       const trip = await store.trips.findById(req.params.id);
       if (!trip) return res.status(404).json({ error: 'Not found' });
-      res.json(trip);
+      const poster = await store.users.findById(trip.posterId);
+      res.json({ ...trip, posterName: poster?.displayName ?? null });
     } catch (e) { next(e); }
   });
 

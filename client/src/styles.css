@@ -26,3 +26,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .route { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .meta { display: flex; gap: 16px; color: var(--muted); font-size: .95rem; margin-top: 6px; flex-wrap: wrap; }
 small { font-weight: 400; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 12px 0 18px; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; }
+a.route { color: inherit; text-decoration: none; }

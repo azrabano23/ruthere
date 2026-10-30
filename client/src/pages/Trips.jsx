@@ -18,7 +18,7 @@ export default function Trips() {
       <ul className="trip-list">
         {trips.map((t) => (
           <li key={t.id} className="card trip">
-            <div className="route"><strong>{t.origin.label}</strong><span>→</span><strong>{t.destination.label}</strong></div>
+            <Link to={`/trips/${t.id}`} className="route"><strong>{t.origin.label}</strong><span>→</span><strong>{t.destination.label}</strong></Link>
             <div className="meta">
               <span>{fmt(t.departsAt)}</span>
               <span>{t.seats} seat{t.seats === 1 ? '' : 's'}</span>
