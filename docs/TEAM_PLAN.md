@@ -24,12 +24,14 @@ Repo: github.com/azrabano23/ruthere. Read the README, run `npm install && npm ru
 5. Timekeeper at rehearsals.
 
 ## Azra Bano (branch `azra`)
-1. `GET /trips/mine`, `DELETE /trips/:id` (poster only) in `server/src/routes/trips.js`, store methods in both stores.
-2. `client/src/pages/TripDetail.jsx` at `/trips/:id` with a working "Request a seat" button.
-3. `client/src/pages/MyTrips.jsx` at `/my-trips` with Cancel.
-4. Seat reservation that cannot double-book the last seat, with a test that proves it.
-5. Presentation draft 1 in Drive by Nov 2: full deck skeleton in the proposal's style, one section per speaker with time budget, architecture diagram, data model diagram, technical slides (3:15–5:15) filled in. Everyone drops their slides into it.
-6. Repo owner: review and merge PRs.
+1. ~~`GET /trips/mine`, `DELETE /trips/:id` (poster only), store methods in both stores.~~ Done.
+2. ~~Trip detail page with a working "Request a seat" button.~~ Done.
+3. ~~My trips page with Cancel.~~ Done.
+4. ~~Seat reservation that cannot double-book the last seat, with a race test.~~ Done.
+5. ~~Give up your seat.~~ Done.
+6. ~~Safety (professor's ask): emergency button per use case 7, 911 and RUPD resources, emergency contact on the account, alert with live location.~~ Done. Follow-up: real SMS delivery (Twilio) and confirm the RUPD numbers with the department.
+7. Presentation draft 1 in Drive by Nov 2: full deck skeleton in the proposal's style, one section per speaker with time budget, architecture diagram, data model diagram, technical slides (3:15–5:15) filled in, one safety slide. Everyone drops their slides into it.
+8. Repo owner: review and merge PRs.
 
 ## Chris Savage (branch `chris`)
 1. `client/src/pages/Profile.jsx` at `/profile`: edit display name and Venmo/Zelle handle (`PATCH /auth/me`).
