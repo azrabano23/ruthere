@@ -4,6 +4,8 @@ import { api } from './lib/api.js';
 import SignIn from './pages/SignIn.jsx';
 import PostTrip from './pages/PostTrip.jsx';
 import Trips from './pages/Trips.jsx';
+import TripDetail from './pages/TripDetail.jsx';
+import MyTrips from './pages/MyTrips.jsx';
 
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
@@ -22,6 +24,7 @@ export default function App() {
         <nav>
           {user ? (<>
             <Link to="/trips">Trips</Link>
+            <Link to="/my-trips">My trips</Link>
             <Link to="/post">Post a trip</Link>
             <button className="linkish" onClick={signOut}>Sign out ({user.email.split('@')[0]})</button>
           </>) : <Link to="/">Sign in</Link>}
@@ -31,6 +34,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={user ? <Navigate to="/trips" /> : <SignIn onSignedIn={setUser} />} />
           <Route path="/trips" element={user ? <Trips /> : <Navigate to="/" />} />
+          <Route path="/trips/:id" element={user ? <TripDetail user={user} /> : <Navigate to="/" />} />
+          <Route path="/my-trips" element={user ? <MyTrips /> : <Navigate to="/" />} />
           <Route path="/post" element={user ? <PostTrip /> : <Navigate to="/" />} />
         </Routes>
       </main>
