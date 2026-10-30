@@ -21,9 +21,38 @@ If you don't have a car at Rutgers, getting around means a packed bus or a solo 
 | Tests | Jasmine (unit) and Cucumber.js (acceptance) | Every must-have user story gets a scenario |
 | Hosting | Render (API) and Vercel (client), both free | Public URL for the demo |
 
+## Who codes what
+
+Everyone owns one slice of the code. You build it on your own branch, open a pull request into `main`, one teammate reviews, merge. Your commits stay under your name, so the commit history shows who built what.
+
+| Person | Branch | Your slice | Files you own |
+|---|---|---|---|
+| Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx` |
+| Joshua In | `joshua` | Database on Supabase + putting the app online (Render + Vercel) | `server/src/db/store.js`, `server/src/db/schema.sql`, hosting dashboards |
+| Aaron Chu | `aaron` | Sign-in emails via Resend, "resend code" button with a countdown | `server/src/lib/email.js`, `client/src/pages/SignIn.jsx` |
+| Azra Bano | `azra` | Trip detail page, "my trips" page, cancel a trip you posted | new `client/src/pages/TripDetail.jsx`, new `client/src/pages/MyTrips.jsx`, `server/src/routes/trips.js` |
+| Chris Savage | `chris` | Profile page (name + Venmo handle), filter trips by campus and day, seed data for the demo | new `client/src/pages/Profile.jsx`, `client/src/pages/Trips.jsx`, new `server/src/db/seed.js` |
+| Anthony Morales | `anthony` | Driver application form + admin approve/reject, Cucumber acceptance tests | new `server/src/routes/drivers.js`, new `client/src/pages/DriverApply.jsx`, `server/features/` |
+| Abuchi Okpara | `abuchi` | Matching rules: the function that finds trips leaving the same spot within 15 minutes, with tests | new `server/src/lib/matching.js`, new `server/spec/matchingSpec.js`, `docs/MATCHING.md` |
+
+Each slice is about the same size: one or two screens or routes, plus a test. Exact steps and "done when" checks are in `docs/TEAM_PLAN.md`.
+
+### Daily workflow
+
+```bash
+git checkout yourname
+git pull origin main          # get everyone else's merged work
+# ... code ...
+npm test
+git add -A && git commit -m "short plain message of what you did"
+git push origin yourname
+```
+
+Then open a pull request on GitHub from `yourname` into `main`. Keep commit messages short and plain: "add trip detail page", "fix code expiry bug".
+
 ## To-do list (plain version)
 
-Check the box when it is merged to `main`. Full details, files and owners are in `docs/TEAM_PLAN.md`.
+Check the box when it is merged to `main`.
 
 **Done**
 - [x] Sign in with a Rutgers email and a 6-digit code
@@ -37,24 +66,21 @@ Check the box when it is merged to `main`. Full details, files and owners are in
 - [ ] Real address search with Google Maps, and a map of the pickup spot (Zen)
 - [ ] Real database on Supabase so data doesn't disappear (Joshua)
 - [ ] Put the app on the internet at a public link (Joshua)
-- [ ] Real sign-in emails instead of the console (Aaron)
-- [ ] "Resend code" button and countdown on the sign-in screen (Aaron)
-- [ ] Edit your name and Venmo handle (Aaron)
-- [ ] Trip detail page with a "Request a seat" button (Chris)
-- [ ] Fake test accounts and trips for the demo, demo script, backup video (Chris)
+- [ ] Real sign-in emails instead of the console, resend button, countdown (Aaron)
+- [ ] Trip detail page, my trips page, cancel a trip (Azra)
+- [ ] Profile page, trip filters, fake accounts and trips for the demo (Chris)
+- [ ] Driver application and admin approval, Cucumber tests (Anthony)
+- [ ] Matching rules spec and a tested matching function (Abuchi)
 - [ ] Every user story as a GitHub issue (Anthony)
-- [ ] Cucumber acceptance tests for "non-Rutgers email rejected" and "$24 split 4 ways is $6" (Anthony)
-- [ ] Written spec of the matching rules and a tested matching function (Abuchi)
-- [ ] Slide deck with architecture and data model diagrams (Azra)
+- [ ] Demo script and backup video (Chris)
+- [ ] Slide deck with architecture and data model diagrams (Azra assembles, everyone fills their section)
 - [ ] Register our presentation timeslot (Abuchi, today)
 
 **After the midterm (Nov 9 to Dec 6)**
-- [ ] Matching: find trips leaving the same spot within 15 minutes, going near your destination
 - [ ] Request and reserve a seat (no double-booking the last seat)
 - [ ] Shared Uber groups of up to 4 when no driver matches
 - [ ] Fare split screen showing what each person owes
 - [ ] Live updates when a group fills or someone drops (Socket.IO)
-- [ ] Driver application and admin approval
 - [ ] Leave a group, strikes for late cancels
 - [ ] Emergency button
 - [ ] Message your group, report or block a user
@@ -123,7 +149,7 @@ docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 
 ## How we work
 
-- One branch per task, named `yourname/short-task`. Open a PR, one teammate reviews, merge to `main`.
+- Work on your own branch (`zen`, `joshua`, `aaron`, `azra`, `chris`, `anthony`, `abuchi`). Open a PR, one teammate reviews, merge to `main`.
 - Never commit `.env`. Keys go in `.env` locally and in the hosting dashboard for production.
 - Every user story is a GitHub issue using the "User story" template. Link PRs to their issue.
 - Pure logic goes in `server/src/lib` with a Jasmine spec next to it in `server/spec`. Routes stay thin.
