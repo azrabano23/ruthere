@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { requireUser } from '../lib/auth.js';
 import { validateTrip, canCancel } from '../lib/trips.js';
+import { RESERVATION_MESSAGES } from '../lib/reservations.js';
 
 export function tripsRouter(store) {
   const r = Router();
@@ -33,8 +34,25 @@ export function tripsRouter(store) {
     try {
       const trip = await store.trips.findById(req.params.id);
       if (!trip) return res.status(404).json({ error: 'Not found' });
-      const poster = await store.users.findById(trip.posterId);
-      res.json({ ...trip, posterName: poster?.displayName ?? null });
+      const [poster, reserved, joined] = await Promise.all([
+        store.users.findById(trip.posterId),
+        store.reservations.countForTrip(trip.id),
+        store.reservations.has(trip.id, req.user.id),
+      ]);
+      res.json({ ...trip, posterName: poster?.displayName ?? null, seatsLeft: trip.seats - reserved, joined });
+    } catch (e) { next(e); }
+  });
+
+  // Request a seat. Exactly one rider can win the last seat, even if many click at once.
+  r.post('/:id/request', requireUser(store), async (req, res, next) => {
+    try {
+      const verdict = await store.reservations.reserve(req.params.id, req.user.id);
+      if (!verdict.ok) {
+        const status = verdict.reason === 'not_found' ? 404 : 409;
+        return res.status(status).json({ error: RESERVATION_MESSAGES[verdict.reason], reason: verdict.reason });
+      }
+      const seatsLeft = (await store.trips.findById(req.params.id)).seats - (await store.reservations.countForTrip(req.params.id));
+      res.status(201).json({ ok: true, seatsLeft });
     } catch (e) { next(e); }
   });
 

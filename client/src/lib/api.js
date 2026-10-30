@@ -23,5 +23,6 @@ export const api = {
   postTrip: (trip) => call('/trips', { method: 'POST', body: trip }),
   trip: (id) => call(`/trips/${id}`),
   myTrips: () => call('/trips/mine'),
+  requestSeat: (id) => call(`/trips/${id}/request`, { method: 'POST' }),
   cancelTrip: (id) => call(`/trips/${id}`, { method: 'DELETE' }),
 };
