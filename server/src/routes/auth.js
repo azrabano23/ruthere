@@ -42,8 +42,8 @@ export function authRouter(store) {
 
   r.patch('/me', requireUser(store), async (req, res, next) => {
     try {
-      const { displayName, paymentHandle } = req.body ?? {};
-      const user = await store.users.update(req.user.id, { displayName, paymentHandle });
+      const { displayName, paymentHandle, emergencyContactName, emergencyContactPhone } = req.body ?? {};
+      const user = await store.users.update(req.user.id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone });
       res.json({ user });
     } catch (e) { next(e); }
   });

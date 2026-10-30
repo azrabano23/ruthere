@@ -29,8 +29,8 @@ function memoryStore() {
     users: {
       async findById(id) { return users.get(id) ?? null; },
       async findByEmail(email) { return [...users.values()].find((u) => u.email === email) ?? null; },
-      async create({ email }) { const u = { id: crypto.randomUUID(), email, displayName: null, paymentHandle: null, isDriverApproved: false, createdAt: new Date().toISOString() }; users.set(u.id, u); return u; },
-      async update(id, patch) { const u = { ...users.get(id) }; for (const k of ['displayName', 'paymentHandle']) if (patch[k] !== undefined) u[k] = patch[k]; users.set(id, u); return u; },
+      async create({ email }) { const u = { id: crypto.randomUUID(), email, displayName: null, paymentHandle: null, isDriverApproved: false, emergencyContactName: null, emergencyContactPhone: null, createdAt: new Date().toISOString() }; users.set(u.id, u); return u; },
+      async update(id, patch) { const u = { ...users.get(id) }; for (const k of ['displayName', 'paymentHandle', 'emergencyContactName', 'emergencyContactPhone']) if (patch[k] !== undefined) u[k] = patch[k]; users.set(id, u); return u; },
     },
     codes: {
       async upsert(email, rec) { codes.set(email, { ...rec }); },
@@ -51,7 +51,7 @@ function memoryStore() {
 async function pgStore(connectionString) {
   const { default: pg } = await import('pg');
   const pool = new pg.Pool({ connectionString, ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false } });
-  const userRow = (r) => r && { id: r.id, email: r.email, displayName: r.display_name, paymentHandle: r.payment_handle, isDriverApproved: r.is_driver_approved, createdAt: r.created_at };
+  const userRow = (r) => r && { id: r.id, email: r.email, displayName: r.display_name, paymentHandle: r.payment_handle, isDriverApproved: r.is_driver_approved, emergencyContactName: r.emergency_contact_name, emergencyContactPhone: r.emergency_contact_phone, createdAt: r.created_at };
   const tripRow = (r) => r && ({
     id: r.id, posterId: r.poster_id,
     origin: { label: r.origin_label, lat: r.origin_lat, lng: r.origin_lng },
@@ -88,8 +88,10 @@ async function pgStore(connectionString) {
       async findById(id) { return userRow((await pool.query('select * from users where id=$1', [id])).rows[0]); },
       async findByEmail(email) { return userRow((await pool.query('select * from users where email=$1', [email])).rows[0]); },
       async create({ email }) { return userRow((await pool.query('insert into users(email) values($1) returning *', [email])).rows[0]); },
-      async update(id, { displayName, paymentHandle }) {
-        return userRow((await pool.query('update users set display_name=coalesce($2,display_name), payment_handle=coalesce($3,payment_handle) where id=$1 returning *', [id, displayName ?? null, paymentHandle ?? null])).rows[0]);
+      async update(id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone }) {
+        return userRow((await pool.query(
+          'update users set display_name=coalesce($2,display_name), payment_handle=coalesce($3,payment_handle), emergency_contact_name=coalesce($4,emergency_contact_name), emergency_contact_phone=coalesce($5,emergency_contact_phone) where id=$1 returning *',
+          [id, displayName ?? null, paymentHandle ?? null, emergencyContactName ?? null, emergencyContactPhone ?? null])).rows[0]);
       },
     },
     codes: {

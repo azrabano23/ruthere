@@ -6,6 +6,7 @@ import { createStore } from './db/store.js';
 import { authRouter } from './routes/auth.js';
 import { tripsRouter } from './routes/trips.js';
 import { pickupSpotsRouter } from './routes/pickupSpots.js';
+import { safetyRouter } from './routes/safety.js';
 
 const app = express();
 const store = await createStore();
@@ -18,6 +19,7 @@ app.get('/health', (_req, res) => res.json({ ok: true, store: store.kind }));
 app.use('/auth', authRouter(store));
 app.use('/trips', tripsRouter(store));
 app.use('/pickup-spots', pickupSpotsRouter());
+app.use('/safety', safetyRouter(store));
 
 app.use((err, _req, res, _next) => {
   console.error(err);

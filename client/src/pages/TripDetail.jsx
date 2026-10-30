@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
+import SafetyPanel from '../components/SafetyPanel.jsx';
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
-export default function TripDetail({ user }) {
+export default function TripDetail({ user, onUserChange }) {
   const { id } = useParams();
   const [trip, setTrip] = useState(undefined);
   const [msg, setMsg] = useState('');
@@ -57,6 +58,7 @@ export default function TripDetail({ user }) {
       </>)}
       {mine && <Link className="button" to="/my-trips">Manage in My trips</Link>}
       {msg && <p className="muted">{msg}</p>}
+      {(mine || trip.joined) && <SafetyPanel trip={trip} user={user} onUserChange={onUserChange} />}
     </section>
   );
 }
