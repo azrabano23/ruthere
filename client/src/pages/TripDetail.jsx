@@ -10,6 +10,16 @@ export default function TripDetail({ user }) {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
 
+  async function giveUpSeat() {
+    if (!confirm('Give up your seat? Someone else can take it.')) return;
+    setBusy(true); setMsg('');
+    try {
+      const { seatsLeft } = await api.giveUpSeat(trip.id);
+      setTrip({ ...trip, joined: false, seatsLeft });
+      setMsg('You gave up your seat.');
+    } catch (err) { setMsg(err.message); } finally { setBusy(false); }
+  }
+
   async function requestSeat() {
     setBusy(true); setMsg('');
     try {
@@ -41,7 +51,10 @@ export default function TripDetail({ user }) {
         {trip.notes && <><dt>Notes</dt><dd>{trip.notes}</dd></>}
       </dl>
       {!mine && !trip.joined && <button disabled={busy || trip.seatsLeft <= 0} onClick={requestSeat}>{trip.seatsLeft <= 0 ? 'Trip is full' : 'Request a seat'}</button>}
-      {!mine && trip.joined && <p><strong>You have a seat on this trip.</strong></p>}
+      {!mine && trip.joined && (<>
+        <p><strong>You have a seat on this trip.</strong></p>
+        <button className="danger" disabled={busy} onClick={giveUpSeat}>Give up my seat</button>
+      </>)}
       {mine && <Link className="button" to="/my-trips">Manage in My trips</Link>}
       {msg && <p className="muted">{msg}</p>}
     </section>

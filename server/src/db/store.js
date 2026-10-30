@@ -22,6 +22,7 @@ function memoryStore() {
         if (verdict.ok) { set.add(riderId); reservations.set(tripId, set); }
         return verdict;
       },
+      async release(tripId, riderId) { return reservations.get(tripId)?.delete(riderId) ?? false; },
       async countForTrip(tripId) { return reservations.get(tripId)?.size ?? 0; },
       async has(tripId, riderId) { return reservations.get(tripId)?.has(riderId) ?? false; },
     },
@@ -79,6 +80,7 @@ async function pgStore(connectionString) {
           throw e;
         } finally { client.release(); }
       },
+      async release(tripId, riderId) { return (await pool.query('delete from seat_reservations where trip_id=$1 and rider_id=$2', [tripId, riderId])).rowCount > 0; },
       async countForTrip(tripId) { return Number((await pool.query('select count(*)::int as n from seat_reservations where trip_id=$1', [tripId])).rows[0].n); },
       async has(tripId, riderId) { return (await pool.query('select 1 from seat_reservations where trip_id=$1 and rider_id=$2', [tripId, riderId])).rowCount > 0; },
     },

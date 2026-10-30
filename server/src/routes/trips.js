@@ -56,6 +56,18 @@ export function tripsRouter(store) {
     } catch (e) { next(e); }
   });
 
+  // Give up my seat. Frees it for the next rider.
+  r.delete('/:id/request', requireUser(store), async (req, res, next) => {
+    try {
+      const trip = await store.trips.findById(req.params.id);
+      if (!trip) return res.status(404).json({ error: 'Not found' });
+      const released = await store.reservations.release(trip.id, req.user.id);
+      if (!released) return res.status(404).json({ error: "You don't have a seat on this trip" });
+      const seatsLeft = trip.seats - (await store.reservations.countForTrip(trip.id));
+      res.json({ ok: true, seatsLeft });
+    } catch (e) { next(e); }
+  });
+
   // Cancel a trip I posted
   r.delete('/:id', requireUser(store), async (req, res, next) => {
     try {
