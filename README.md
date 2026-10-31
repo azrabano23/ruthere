@@ -61,6 +61,7 @@ Check the box when it is merged to `main`.
 - [x] Pick a campus spot as the address (works without a Google key)
 - [x] Database tables designed
 - [x] Tests run automatically on every pull request
+- [x] 40 tests, including end-to-end tests through the real API
 
 **Before the midterm (Nov 4 freeze)**
 - [ ] Real address search with Google Maps, and a map of the pickup spot (Zen)
@@ -78,7 +79,8 @@ Check the box when it is merged to `main`.
 - [ ] Every user story as a GitHub issue (Anthony)
 - [ ] Demo script and backup video (Chris)
 - [ ] Slide deck with architecture and data model diagrams (Azra assembles, everyone fills their section)
-- [ ] Register our presentation timeslot (Abuchi, today)
+- [ ] Register our presentation timeslot on page 6 of the course doc (Abuchi, ASAP, first come first served)
+- [ ] Add all six teammates as collaborators on this repo (Azra)
 
 **After the midterm (Nov 9 to Dec 6)**
 - [ ] Shared Uber groups of up to 4 when no driver matches
