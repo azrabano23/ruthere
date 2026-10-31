@@ -118,6 +118,8 @@ Run the tests:
 npm test
 ```
 
+40 Jasmine specs: pure rules (`server/spec/*Spec.js`), the last-seat race, and end-to-end API tests that start the real server on a random port (`server/spec/apiSpec.js`).
+
 ## Turning on the real services
 
 Each is one variable in `.env`. See `.env.example`.
@@ -131,7 +133,7 @@ Each is one variable in `.env`. See `.env.example`.
 ## Layout
 
 ```
-server/   Express API. src/routes (auth, trips, pickup-spots), src/lib (pure logic, tested), src/db (schema.sql + store)
+server/   Express API. src/app.js (routes wired up), src/routes (auth, trips, safety, pickup-spots), src/lib (pure logic, tested), src/db (schema.sql + store), spec/ (tests)
 client/   React + Vite. src/pages (SignIn, PostTrip, Trips), src/components/PlaceInput.jsx
 docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 ```

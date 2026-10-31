@@ -1,3 +1,4 @@
+// Safety resources and the emergency alert sent to a rider's emergency contact.
 import { Router } from 'express';
 import { requireUser } from '../lib/auth.js';
 import { SAFETY_RESOURCES, buildAlertMessage, deliverAlert } from '../lib/safety.js';

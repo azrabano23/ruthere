@@ -1,3 +1,4 @@
+// Trips: post, list, detail, request and give up a seat, cancel. All routes need a signed-in user.
 import { Router } from 'express';
 import { requireUser } from '../lib/auth.js';
 import { validateTrip, canCancel } from '../lib/trips.js';
