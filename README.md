@@ -27,7 +27,7 @@ Everyone owns one slice of the code. You build it on your own branch, open a pul
 
 | Person | Branch | Your slice | Files you own |
 |---|---|---|---|
-| Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx` |
+| Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip. Also owns the UI: one styling pass across all screens so the app looks like the proposal deck and works on a phone | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx`, `client/src/styles.css` |
 | Joshua In | `joshua` | Database on Supabase + putting the app online (Render + Vercel) | `server/src/db/store.js`, `server/src/db/schema.sql`, hosting dashboards |
 | Aaron Chu | `aaron` | Sign-in emails via Resend, "resend code" button with a countdown | `server/src/lib/email.js`, `client/src/pages/SignIn.jsx` |
 | Azra Bano | `azra` | Trip detail page, "my trips" page, cancel a trip you posted | new `client/src/pages/TripDetail.jsx`, new `client/src/pages/MyTrips.jsx`, `server/src/routes/trips.js` |
@@ -64,6 +64,7 @@ Check the box when it is merged to `main`.
 
 **Before the midterm (Nov 4 freeze)**
 - [ ] Real address search with Google Maps, and a map of the pickup spot (Zen)
+- [ ] UI pass: proposal-deck look, phone layout, empty and loading states (Zen)
 - [ ] Real database on Supabase so data doesn't disappear (Joshua)
 - [ ] Put the app on the internet at a public link (Joshua)
 - [ ] Real sign-in emails instead of the console, resend button, countdown (Aaron)

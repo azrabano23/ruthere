@@ -6,8 +6,9 @@ Repo: github.com/azrabano23/ruthere. Read the README, run `npm install && npm ru
 1. Google Cloud project, enable Maps JavaScript API + Places API, browser key restricted to localhost:5173 and our deployed domain, daily quota cap. Put it in `.env` as `VITE_GOOGLE_MAPS_KEY`.
 2. Confirm `client/src/components/PlaceInput.jsx` switches to real autocomplete. Fix what breaks.
 3. New `client/src/components/PickupMap.jsx`: small map of the pickup spot on each trip card and on the trip detail page. Shows nothing when no key.
-4. Slides: opening hook (0:00–1:00). Scene first, then $24 vs $6, one car instead of four.
-5. Give Joshua the key privately for production. Never commit it.
+4. UI owner. One pass across every screen in `client/src/styles.css` and the pages: match the proposal deck's colors and type, every page usable on a phone (the demo runs on one), empty and loading states, one shared look for cards, buttons and forms. Everyone else keeps using the existing class names so your pass applies everywhere. Done by Nov 3 so Chris can record the demo on it.
+5. Slides: opening hook (0:00–1:00). Scene first, then $24 vs $6, one car instead of four.
+6. Give Joshua the key privately for production. Never commit it.
 
 ## Joshua In (branch `joshua`)
 1. Free Supabase project. Connection string in `.env` as `DATABASE_URL`. Run `npm run db:schema`. `/health` must say `"store":"postgres"`.
