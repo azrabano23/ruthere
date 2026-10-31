@@ -1,7 +1,7 @@
 // Sends the one-time sign-in code. In dev (no RESEND_API_KEY) it prints to the console.
 export async function sendCode(email, code) {
   if (!process.env.RESEND_API_KEY) {
-    console.log(`\n[dev email] sign-in code for ${email}: ${code}\n`);
+  if (process.env.NODE_ENV !== 'test') console.log(`\n[dev email] sign-in code for ${email}: ${code}\n`);
     return;
   }
   const { Resend } = await import('resend');

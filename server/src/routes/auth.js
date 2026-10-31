@@ -1,3 +1,4 @@
+// Sign-in with a one-time code emailed to a Rutgers address, plus the current user's profile.
 import { Router } from 'express';
 import { isRutgersEmail, generateCode, hashCode, checkCode, signSession, requireUser, CODE_TTL_MS } from '../lib/auth.js';
 import { sendCode } from '../lib/email.js';

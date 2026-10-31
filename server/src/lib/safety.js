@@ -25,6 +25,6 @@ export function buildAlertMessage({ user, trip, location, at = new Date() }) {
 /** Delivers the alert. SMS needs a provider we don't have yet, so for now this logs and,
  *  if an email key is configured, emails the contact when the phone field holds an email. */
 export async function deliverAlert({ contact, message }) {
-  console.log(`\n[emergency alert] to ${contact.name} <${contact.phone}>:\n${message}\n`);
+  if (process.env.NODE_ENV !== 'test') console.log(`\n[emergency alert] to ${contact.name} <${contact.phone}>:\n${message}\n`);
   return { delivered: 'logged' };
 }

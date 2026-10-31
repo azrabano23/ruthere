@@ -1,3 +1,4 @@
+// Pure trip rules: validation, fare split, who may cancel. No database, so these are easy to test.
 export const MIN_LEAD_MS = 10 * 60 * 1000;            // departure at least 10 minutes out
 export const MAX_LEAD_MS = 14 * 24 * 60 * 60 * 1000;  // and at most two weeks out
 export const MAX_SEATS = 7;
