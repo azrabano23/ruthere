@@ -61,6 +61,11 @@ describe('API: sign in', () => {
     const r = await http('POST', '/auth/verify', { email: 'a@rutgers.edu', code: '000000' });
     expect(r.body.reason).toBe('locked');
   });
+  it('makes you wait before sending another code', async () => {
+    const r = await http('POST', '/auth/request-code', { email: 'a@rutgers.edu' });
+    expect(r.status).toBe(429);
+    expect(r.body.retryAfterSeconds).toBeGreaterThan(0);
+  });
   it('creates the account on the first correct code and sets a session', async () => {
     const r = await signIn(ctx.store, http, 'b@scarletmail.rutgers.edu');
     expect(r.status).toBe(200);

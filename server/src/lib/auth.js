@@ -4,6 +4,17 @@ import jwt from 'jsonwebtoken';
 
 export const CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 export const MAX_ATTEMPTS = 5;
+export const RESEND_COOLDOWN_MS = 30 * 1000; // wait between "Resend code" clicks
+
+/**
+ * Seconds until a new code may be sent for this record, 0 if allowed now.
+ * The send time isn't stored, so it's worked out from the expiry.
+ */
+export function resendWaitSeconds(record, now = Date.now()) {
+  if (!record) return 0;
+  const sentAt = record.expiresAt - CODE_TTL_MS;
+  return Math.max(0, Math.ceil((sentAt + RESEND_COOLDOWN_MS - now) / 1000));
+}
 
 export function allowedDomains() {
   return (process.env.ALLOWED_EMAIL_DOMAINS ?? 'rutgers.edu,scarletmail.rutgers.edu')
