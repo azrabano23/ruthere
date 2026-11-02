@@ -1,3 +1,4 @@
+import PickupMap from '../components/PickupMap.jsx';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
@@ -25,6 +26,7 @@ export default function Trips() {
               <span>{t.pricePerSeatCents == null ? 'Split the fare' : `$${(t.pricePerSeatCents / 100).toFixed(2)} / seat`}</span>
             </div>
             {t.notes && <p className="muted">{t.notes}</p>}
+            <PickupMap place={t.origin} />
           </li>
         ))}
       </ul>

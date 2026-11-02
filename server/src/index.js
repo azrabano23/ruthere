@@ -10,7 +10,14 @@ import { pickupSpotsRouter } from './routes/pickupSpots.js';
 const app = express();
 const store = await createStore();
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    ...(process.env.CLIENT_ORIGIN ? [process.env.CLIENT_ORIGIN] : []),
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
