@@ -1,6 +1,6 @@
 // Sign-in with a one-time code emailed to a Rutgers address, plus the current user's profile.
 import { Router } from 'express';
-import { isRutgersEmail, generateCode, hashCode, checkCode, signSession, requireUser, CODE_TTL_MS } from '../lib/auth.js';
+import { isRutgersEmail, generateCode, hashCode, checkCode, signSession, requireUser, resendWaitSeconds, CODE_TTL_MS } from '../lib/auth.js';
 import { sendCode } from '../lib/email.js';
 
 export function authRouter(store) {
@@ -11,9 +11,12 @@ export function authRouter(store) {
     try {
       const email = String(req.body?.email ?? '').trim().toLowerCase();
       if (!isRutgersEmail(email)) return res.status(400).json({ error: 'Use your Rutgers email (…@rutgers.edu or …@scarletmail.rutgers.edu)' });
+      const wait = resendWaitSeconds(await store.codes.get(email));
+      if (wait > 0) return res.status(429).json({ error: `Wait ${wait}s before asking for another code`, retryAfterSeconds: wait });
       const code = generateCode();
-      await store.codes.upsert(email, { codeHash: hashCode(code), expiresAt: Date.now() + CODE_TTL_MS, attempts: 0 });
+      // Send before saving, so a failed send doesn't start the cooldown or replace a code that still works.
       await sendCode(email, code);
+      await store.codes.upsert(email, { codeHash: hashCode(code), expiresAt: Date.now() + CODE_TTL_MS, attempts: 0 });
       res.json({ ok: true, expiresInSeconds: CODE_TTL_MS / 1000 });
     } catch (e) { next(e); }
   });
