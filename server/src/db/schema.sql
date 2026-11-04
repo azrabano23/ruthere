@@ -41,3 +41,22 @@ create table if not exists seat_reservations (
   created_at timestamptz not null default now(),
   unique (trip_id, rider_id)
 );
+
+create table if not exists driver_applications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references users(id) on delete cascade,
+  car_make_model text not null,
+  car_color text not null,
+  license_plate text not null,
+  seats_available int not null check (seats_available between 1 and 7),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  reviewed_by uuid references users(id),
+  reviewed_at timestamptz,
+  review_note text,
+  created_at timestamptz not null default now()
+);
+
+create unique index if not exists driver_applications_one_pending_per_user
+  on driver_applications(user_id) where status = 'pending';
+
+create index if not exists driver_applications_status on driver_applications(status, created_at);

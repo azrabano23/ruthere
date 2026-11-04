@@ -6,6 +6,7 @@ import { authRouter } from './routes/auth.js';
 import { tripsRouter } from './routes/trips.js';
 import { pickupSpotsRouter } from './routes/pickupSpots.js';
 import { safetyRouter } from './routes/safety.js';
+import { driversRouter } from './routes/drivers.js';
 
 export function createApp(store) {
   const app = express();
@@ -34,6 +35,7 @@ export function createApp(store) {
   app.use('/trips', tripsRouter(store));
   app.use('/pickup-spots', pickupSpotsRouter());
   app.use('/safety', safetyRouter(store));
+  app.use('/drivers', driversRouter(store));
 
   app.use((err, _req, res, _next) => {
     console.error(err);
