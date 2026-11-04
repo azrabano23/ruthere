@@ -5,7 +5,7 @@ import { createStore } from '../src/db/store.js';
 
 async function startServer() {
   delete process.env.DATABASE_URL;
-  delete process.env.RESEND_API_KEY; // codes print to console, we read them from the store instead
+  delete process.env.BREVO_API_KEY; // codes print to console, we read them from the store instead
   const store = await createStore();
   const server = createApp(store).listen(0);
   await new Promise((r) => server.once('listening', r));
