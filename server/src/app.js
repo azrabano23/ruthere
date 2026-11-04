@@ -10,6 +10,10 @@ import { driversRouter } from './routes/drivers.js';
 
 export function createApp(store) {
   const app = express();
+    app.use((req, _res, next) => {
+    req.url = req.url.replace(/^\/api(?=\/|\?|$)/, '') || '/';
+    next();
+  });
 
   // Who may call the API from a browser: anything in CLIENT_ORIGIN (comma separated),
   // our Vercel deployments, and the local dev server. Cookies need credentials: true.
@@ -46,3 +50,4 @@ export function createApp(store) {
 
   return app;
 }
+
