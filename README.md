@@ -74,7 +74,7 @@ Check the box when it is merged to `main`.
 - [x] Request a seat, no double-booking the last seat (Azra)
 - [x] Give up your seat (Azra)
 - [x] Emergency button: hold 2s, 5s to cancel, opens 911, alerts your emergency contact with location, RUPD resources (Azra)
-- [ ] Profile page, trip filters, fake accounts and trips for the demo (Chris)
+- [x] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [x] Driver application and admin approval (Anthony)
 - [ ] Cucumber acceptance tests (Anthony)
 - [ ] Matching rules spec and a tested matching function (Abuchi)
