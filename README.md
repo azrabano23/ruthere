@@ -27,7 +27,7 @@ Everyone owns one slice of the code. You build it on your own branch, open a pul
 
 | Person | Branch | Your slice | Files you own |
 |---|---|---|---|
-| Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx` |
+| Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip. Also owns the UI: one styling pass across all screens so the app looks like the proposal deck and works on a phone | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx`, `client/src/styles.css` |
 | Joshua In | `joshua` | Database on Supabase + putting the app online (Render + Vercel) | `server/src/db/store.js`, `server/src/db/schema.sql`, hosting dashboards |
 | Aaron Chu | `aaron` | Sign-in emails via Resend, "resend code" button with a countdown | `server/src/lib/email.js`, `client/src/pages/SignIn.jsx` |
 | Azra Bano | `azra` | Trip detail page, "my trips" page, cancel a trip you posted | new `client/src/pages/TripDetail.jsx`, new `client/src/pages/MyTrips.jsx`, `server/src/routes/trips.js` |
@@ -61,28 +61,33 @@ Check the box when it is merged to `main`.
 - [x] Pick a campus spot as the address (works without a Google key)
 - [x] Database tables designed
 - [x] Tests run automatically on every pull request
+- [x] 40 tests, including end-to-end tests through the real API
 
 **Before the midterm (Nov 4 freeze)**
 - [ ] Real address search with Google Maps, and a map of the pickup spot (Zen)
+- [ ] UI pass: proposal-deck look, phone layout, empty and loading states (Zen)
 - [ ] Real database on Supabase so data doesn't disappear (Joshua)
 - [ ] Put the app on the internet at a public link (Joshua)
 - [ ] Real sign-in emails instead of the console, resend button, countdown (Aaron)
-- [ ] Trip detail page, my trips page, cancel a trip (Azra)
+- [x] Trip detail page, my trips page, cancel a trip (Azra)
+- [x] Request a seat, no double-booking the last seat (Azra)
+- [x] Give up your seat (Azra)
+- [x] Emergency button: hold 2s, 5s to cancel, opens 911, alerts your emergency contact with location, RUPD resources (Azra)
 - [ ] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [ ] Driver application and admin approval, Cucumber tests (Anthony)
 - [ ] Matching rules spec and a tested matching function (Abuchi)
 - [ ] Every user story as a GitHub issue (Anthony)
 - [ ] Demo script and backup video (Chris)
 - [ ] Slide deck with architecture and data model diagrams (Azra assembles, everyone fills their section)
-- [ ] Register our presentation timeslot (Abuchi, today)
+- [ ] Register our presentation timeslot on page 6 of the course doc (Abuchi, ASAP, first come first served)
+- [ ] Add all six teammates as collaborators on this repo (Azra)
 
 **After the midterm (Nov 9 to Dec 6)**
-- [ ] Request and reserve a seat (no double-booking the last seat)
 - [ ] Shared Uber groups of up to 4 when no driver matches
 - [ ] Fare split screen showing what each person owes
 - [ ] Live updates when a group fills or someone drops (Socket.IO)
 - [ ] Leave a group, strikes for late cancels
-- [ ] Emergency button
+- [ ] Emergency alert by real SMS (needs Twilio or similar), verify RUPD numbers with the department
 - [ ] Message your group, report or block a user
 - [ ] Test with real students and fix what breaks
 - [ ] Final demo: one full pooled ride, live
@@ -91,7 +96,8 @@ Check the box when it is merged to `main`.
 
 - **Sign in with a Rutgers email.** Six-digit one-time code, 10-minute expiry, locks after 5 wrong tries, non-Rutgers emails rejected.
 - **Post a trip.** Pickup, destination, departure time, open seats, optional price per seat. Validated server-side (different endpoints, 10 minutes to 2 weeks out, 1 to 7 seats).
-- **Trip list.** Upcoming trips, soonest first.
+- **Trip list, trip detail, my trips.** Request a seat (exactly one rider can win the last seat), give it up, cancel a trip you posted.
+- **Safety.** On every trip you're on: 911 and RUPD one tap away, and an emergency button that you hold for 2 seconds, with 5 seconds to cancel, which sends your live location and trip details to your emergency contact and opens the dialer with 911.
 - **Address search.** Google Places Autocomplete when a key is set, otherwise a built-in list of the campus pickup spots from the proposal.
 
 Matching, groups, fare split and the emergency button are the Nov 9 to 22 phase. The schema already has the tables they need, and `splitFareCents` is in place and tested.
@@ -115,6 +121,8 @@ Run the tests:
 npm test
 ```
 
+40 Jasmine specs: pure rules (`server/spec/*Spec.js`), the last-seat race, and end-to-end API tests that start the real server on a random port (`server/spec/apiSpec.js`).
+
 ## Turning on the real services
 
 Each is one variable in `.env`. See `.env.example`.
@@ -128,7 +136,7 @@ Each is one variable in `.env`. See `.env.example`.
 ## Layout
 
 ```
-server/   Express API. src/routes (auth, trips, pickup-spots), src/lib (pure logic, tested), src/db (schema.sql + store)
+server/   Express API. src/app.js (routes wired up), src/routes (auth, trips, safety, pickup-spots), src/lib (pure logic, tested), src/db (schema.sql + store), spec/ (tests)
 client/   React + Vite. src/pages (SignIn, PostTrip, Trips), src/components/PlaceInput.jsx
 docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 ```
@@ -140,12 +148,18 @@ docs/     TEAM_PLAN.md (who does what through the midterm), design notes
 | POST | `/auth/request-code` | `{ email }` | Rutgers domains only |
 | POST | `/auth/verify` | `{ email, code }` | Sets an httpOnly session cookie, returns `{ user, isNew }` |
 | GET | `/auth/me` | | Current user |
-| PATCH | `/auth/me` | `{ displayName, paymentHandle }` | |
+| PATCH | `/auth/me` | `{ displayName, paymentHandle, emergencyContactName, emergencyContactPhone }` | |
 | POST | `/auth/signout` | | |
 | GET | `/pickup-spots` | | Campus spots used by the stubbed address search |
 | GET | `/trips` | | Upcoming trips |
 | POST | `/trips` | `{ origin, destination, departsAt, seats, pricePerSeatCents?, notes? }` | `origin`/`destination` are `{ label, lat, lng }` |
-| GET | `/trips/:id` | | |
+| GET | `/trips/mine` | | Trips I posted |
+| GET | `/trips/:id` | | Includes `seatsLeft` and `joined` |
+| POST | `/trips/:id/request` | | Reserve a seat. 409 when full, already joined, or your own trip |
+| DELETE | `/trips/:id/request` | | Give up my seat |
+| DELETE | `/trips/:id` | | Poster only |
+| GET | `/safety/resources` | | 911, RUPD, Rutgers public safety |
+| POST | `/safety/alert` | `{ tripId?, location? }` | Sends trip + location to the user's emergency contact |
 
 ## How we work
 

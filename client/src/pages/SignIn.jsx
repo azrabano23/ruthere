@@ -18,7 +18,6 @@ export default function SignIn({ onSignedIn }) {
     try {
       const { user, isNew } = await api.verify(email, code);
       if (isNew) setStep('profile'); else onSignedIn(user);
-      if (isNew) window.__pendingUser = user;
     } catch (err) {
       setError(err.message);
       if (err.data?.reason === 'expired' || err.data?.reason === 'locked') { setStep('email'); setCode(''); }

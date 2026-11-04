@@ -1,3 +1,4 @@
+// Sign-in rules: which emails count as Rutgers, code generation and checking, session cookies.
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 

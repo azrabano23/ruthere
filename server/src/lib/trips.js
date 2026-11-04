@@ -1,3 +1,4 @@
+// Pure trip rules: validation, fare split, who may cancel. No database, so these are easy to test.
 export const MIN_LEAD_MS = 10 * 60 * 1000;            // departure at least 10 minutes out
 export const MAX_LEAD_MS = 14 * 24 * 60 * 60 * 1000;  // and at most two weeks out
 export const MAX_SEATS = 7;
@@ -23,4 +24,9 @@ export function splitFareCents(totalCents, n) {
   const base = Math.floor(totalCents / n);
   const rem = totalCents - base * n;
   return Array.from({ length: n }, (_, i) => base + (i < rem ? 1 : 0));
+}
+
+/** Only the student who posted a trip may cancel it. */
+export function canCancel(trip, user) {
+  return Boolean(trip && user && trip.posterId === user.id);
 }

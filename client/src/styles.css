@@ -1,3 +1,45 @@
+:root { --red: #b31b2b; --ink: #1b1b1f; --paper: #f5f1ea; --card: #fffdf9; --muted: #6a6560; --line: #e2dcd2; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--ink); background: var(--paper); }
+.shell { max-width: 880px; margin: 0 auto; padding: 16px; min-height: 100vh; display: flex; flex-direction: column; gap: 20px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { font-weight: 800; font-size: 1.4rem; text-decoration: none; color: var(--ink); }
+.brand span { color: var(--red); }
+nav { display: flex; gap: 16px; align-items: center; }
+nav a { color: var(--ink); text-decoration: none; font-weight: 600; }
+main { flex: 1; }
+footer { color: var(--muted); font-size: .9rem; text-align: center; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+.narrow { max-width: 480px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin: 0 0 6px; }
+.muted { color: var(--muted); }
+form { display: flex; flex-direction: column; gap: 14px; margin-top: 12px; }
+label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: .95rem; }
+input, select { font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+button, .button { font: inherit; font-weight: 700; padding: 11px 16px; border-radius: 10px; border: 0; background: var(--red); color: #fff; cursor: pointer; text-decoration: none; text-align: center; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.linkish { background: none; color: var(--red); padding: 0; font-weight: 600; }
+.error { color: var(--red); margin: 10px 0 0; }
+.row { display: flex; gap: 12px; } .row > * { flex: 1; }
+.between { justify-content: space-between; align-items: center; }
+.trip-list { list-style: none; padding: 0; margin: 12px 0 0; display: grid; gap: 12px; }
+.route { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.meta { display: flex; gap: 16px; color: var(--muted); font-size: .95rem; margin-top: 6px; flex-wrap: wrap; }
+small { font-weight: 400; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 12px 0 18px; }
+.facts dt { color: var(--muted); } .facts dd { margin: 0; }
+a.route { color: inherit; text-decoration: none; }
+.danger { background: #fff; color: var(--red); border: 1px solid var(--red); margin-top: 10px; }
+.safety { margin-top: 20px; border-color: #f0c9ce; }
+.safety h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.resources { list-style: none; padding: 0; margin: 0 0 14px; display: grid; gap: 6px; }
+.resources a { color: var(--ink); }
+.emergency { width: 100%; background: var(--red); font-size: 1.05rem; padding: 16px; user-select: none; -webkit-user-select: none; touch-action: none; }
+.emergency.arming { background: #7a0f1b; animation: pulse 1s infinite; }
+@keyframes pulse { 50% { opacity: .75; } }
+.countdown { background: #fde8ea; border-radius: 10px; padding: 14px; }
+.contact-form { margin-top: 14px; }
+
 .pickup-map { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .pickup-map-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .pickup-map-heading a { color: var(--red); font-size: .9rem; }
@@ -5,18 +47,14 @@
 .pickup-map iframe { display: block; width: 100%; height: 280px; border: 0; border-radius: 10px; }
 input, select, textarea { width: 100%; min-width: 0; font-size: 16px; }
 button, .button, input, select { min-height: 44px; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--red); outline-offset: 3px; }
 
 @media (max-width: 600px) {
-    .shell { padding: 14px; }
-    .topbar { align-items: flex-start; }
-    nav { width: 100%; flex-wrap: wrap; gap: 12px; }
-    .row { flex-direction: column; }
+  .shell { padding: 14px; }
+  nav { width: 100%; flex-wrap: wrap; gap: 12px; }
+  .row { flex-direction: column; }
   .row > * { flex: auto; min-width: 0; }
-    .between { align-items: stretch; }
-    .card { padding: 16px; }
-    .route { overflow-wrap: anywhere; }
-    .meta { gap: 8px 14px; }
-    .facts { grid-template-columns: 1fr; gap: 4px; }
-    .facts dd { margin-bottom: 10px; overflow-wrap: anywhere; }
+  .between { align-items: stretch; }
+  .card { padding: 16px; }
+  .route { overflow-wrap: anywhere; }
+  .meta { gap: 8px 14px; }
 }

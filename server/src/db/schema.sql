@@ -7,6 +7,8 @@ create table if not exists users (
   display_name text,
   payment_handle text,
   is_driver_approved boolean not null default false,
+  emergency_contact_name text,
+  emergency_contact_phone text,
   created_at timestamptz not null default now()
 );
 

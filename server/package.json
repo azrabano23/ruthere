@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "test": "jasmine --config=spec/support/jasmine.json"
+    "test": "NODE_ENV=test jasmine --config=spec/support/jasmine.json"
   },
   "dependencies": {
     "cookie-parser": "^1.4.7",

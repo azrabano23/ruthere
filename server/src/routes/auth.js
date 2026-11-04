@@ -1,3 +1,4 @@
+// Sign-in with a one-time code emailed to a Rutgers address, plus the current user's profile.
 import { Router } from 'express';
 import { isRutgersEmail, generateCode, hashCode, checkCode, signSession, requireUser, CODE_TTL_MS } from '../lib/auth.js';
 import { sendCode } from '../lib/email.js';
@@ -42,8 +43,8 @@ export function authRouter(store) {
 
   r.patch('/me', requireUser(store), async (req, res, next) => {
     try {
-      const { displayName, paymentHandle } = req.body ?? {};
-      const user = await store.users.update(req.user.id, { displayName, paymentHandle });
+      const { displayName, paymentHandle, emergencyContactName, emergencyContactPhone } = req.body ?? {};
+      const user = await store.users.update(req.user.id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone });
       res.json({ user });
     } catch (e) { next(e); }
   });
