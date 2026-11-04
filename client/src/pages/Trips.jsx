@@ -1,7 +1,10 @@
+import { generateDemoTrips } from '../data/seedData.js';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import PickupMap from '../components/PickupMap.jsx';
+
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 const CAMPUSES = [
   'College Avenue',
