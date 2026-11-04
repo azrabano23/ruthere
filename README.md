@@ -68,7 +68,7 @@ Check the box when it is merged to `main`.
 - [ ] UI pass: proposal-deck look, phone layout, empty and loading states (Zen)
 - [ ] Real database on Supabase so data doesn't disappear (Joshua)
 - [x] Site on Vercel (Joshua, Azra)
-- [ ] API on Render and VITE_API_URL set in Vercel (Joshua)
+- [x] API on Render, site points at it by default (Joshua, Azra)
 - [x] Real sign-in emails instead of the console, resend button, countdown (Aaron)
 - [x] Trip detail page, my trips page, cancel a trip (Azra)
 - [x] Request a seat, no double-booking the last seat (Azra)

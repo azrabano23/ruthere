@@ -1,4 +1,6 @@
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
+// Where the API lives. VITE_API_URL overrides; otherwise production builds use the
+// Render deployment and dev builds use the local server.
+const BASE = (import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://ruthere-wew4.onrender.com' : 'http://localhost:4000')).replace(/\/$/, '');
 
 async function call(path, { method = 'GET', body } = {}) {
   const res = await fetch(BASE + path, {
