@@ -77,7 +77,7 @@ Check the box when it is merged to `main`.
 - [x] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [x] Driver application and admin approval (Anthony)
 - [ ] Cucumber acceptance tests (Anthony)
-- [ ] Matching rules spec and a tested matching function (Abuchi)
+- [x] Matching rules spec and a tested matching function (Abuchi)
 - [ ] Every user story as a GitHub issue (Anthony)
 - [ ] Demo script and backup video (Chris)
 - [ ] Slide deck with architecture and data model diagrams (Azra assembles, everyone fills their section)
