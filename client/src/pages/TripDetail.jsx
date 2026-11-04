@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import SafetyPanel from '../components/SafetyPanel.jsx';
+import PickupMap from '../components/PickupMap.jsx';
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -51,6 +52,7 @@ export default function TripDetail({ user, onUserChange }) {
         <dt>Posted by</dt><dd>{mine ? 'You' : (trip.posterName ?? 'A verified Rutgers student')}</dd>
         {trip.notes && <><dt>Notes</dt><dd>{trip.notes}</dd></>}
       </dl>
+      <PickupMap place={trip.origin} preview />
       {!mine && !trip.joined && <button disabled={busy || trip.seatsLeft <= 0} onClick={requestSeat}>{trip.seatsLeft <= 0 ? 'Trip is full' : 'Request a seat'}</button>}
       {!mine && trip.joined && (<>
         <p><strong>You have a seat on this trip.</strong></p>
