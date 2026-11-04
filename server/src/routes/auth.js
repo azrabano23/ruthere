@@ -34,7 +34,8 @@ export function authRouter(store) {
       let user = await store.users.findByEmail(email);
       let isNew = false;
       if (!user) { user = await store.users.create({ email }); isNew = true; }
-      res.cookie('session', signSession(user), { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 30 * 24 * 3600 * 1000 });
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('session', signSession(user), { httpOnly: true, sameSite: isProduction ? 'none' : 'lax', secure: isProduction, maxAge: 30 * 24 * 3600 * 1000 });
       res.json({ user, isNew });
     } catch (e) { next(e); }
   });
