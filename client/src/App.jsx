@@ -12,6 +12,10 @@ import Profile from './pages/Profile.jsx';
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
   const navigate = useNavigate();
+  const [theme, setTheme] = useState(() => localStorage.getItem('ruthere-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+  useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('ruthere-theme', theme); }, [theme]);
+  function signedIn(nextUser) { setUser(nextUser); navigate(sessionStorage.getItem('ruthere-role') === 'driver' ? '/post' : '/trips'); }
+
 
   useEffect(() => { api.me().then((d) => setUser(d.user)).catch(() => setUser(null)); }, []);
 
@@ -24,6 +28,7 @@ export default function App() {
       <header className="topbar">
         <Link to="/" className="brand">Ru<span>There</span></Link>
         <nav>
+          <button className="theme-toggle" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>{theme === 'light' ? '☾' : '☀'}<span>{theme === 'light' ? 'Dark' : 'Light'}</span></button>
           {user ? (<>
             <Link to="/trips">Trips</Link>
             <Link to="/my-trips">My trips</Link>
@@ -31,12 +36,12 @@ export default function App() {
             <Link to="/post">Post a trip</Link>
             <Link to="/profile">Profile</Link>
             <button className="linkish" onClick={signOut}>Sign out ({user.email.split('@')[0]})</button>
-          </>) : <Link to="/">Sign in</Link>}
+          </>) : <a href="#signin">Sign in <span aria-hidden="true">↗</span></a>}
         </nav>
       </header>
       <main>
         <Routes>
-          <Route path="/" element={user ? <Navigate to="/trips" /> : <SignIn onSignedIn={setUser} />} />
+          <Route path="/" element={user ? <Navigate to="/trips" /> : <SignIn onSignedIn={signedIn} />} />
           <Route path="/trips" element={user ? <Trips /> : <Navigate to="/" />} />
           <Route path="/trips/:id" element={user ? <TripDetail user={user} onUserChange={setUser} /> : <Navigate to="/" />} />
           <Route path="/my-trips" element={user ? <MyTrips /> : <Navigate to="/" />} />
@@ -45,7 +50,7 @@ export default function App() {
           <Route path="/post" element={user ? <PostTrip /> : <Navigate to="/" />} />
         </Routes>
       </main>
-      <footer>Split a ride with Rutgers students already headed where you're going.</footer>
+      <footer>Made for the way Rutgers moves. · Campus and beyond.</footer>
     </div>
   );
 }
