@@ -76,7 +76,7 @@ export default function SignIn({ onSignedIn }) {
       )}
       {step === 'code' && (
         <form onSubmit={verify}>
-          <p>We sent a six-digit code to <strong>{email}</strong>.</p>
+          <p>We sent a six-digit code to <strong>{email}</strong>. Not in your inbox? Check spam.</p>
           <p className={expired ? 'error' : 'muted'} aria-live="polite">
             {expired ? 'This code has expired. Send a new one below.' : `Code expires in ${mmss(secondsLeft)}`}
           </p>

@@ -18,7 +18,7 @@ Repo: github.com/azrabano23/ruthere. Read the README, run `npm install && npm ru
 5. Slides: overview and objectives (1:00–2:00).
 
 ## Aaron Chu (branch `aaron`)
-1. Free Resend account, `RESEND_API_KEY` and `EMAIL_FROM` in `.env`. A real code must arrive at a scarletmail address via `server/src/lib/email.js`.
+1. Free Brevo account (switched from Resend, which needs a paid domain), `BREVO_API_KEY` and `EMAIL_FROM` in `server/.env`. A real code must arrive at a scarletmail address via `server/src/lib/email.js`.
 2. In `client/src/pages/SignIn.jsx`: 10-minute countdown on the code step and a "Resend code" button.
 3. Jasmine spec for any helper you write.
 4. Slides: progress vs. timeline (2:00–3:15). Collect everyone's status on Nov 2.

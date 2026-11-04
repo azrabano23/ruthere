@@ -16,7 +16,7 @@ If you don't have a car at Rutgers, getting around means a packed bus or a solo 
 | Website / app screens | React (with Vite) | Runs in the browser on laptops and phones, one codebase |
 | Server / API | Node.js + Express | Handles accounts, trips, and later matching and the fare split |
 | Database | PostgreSQL, hosted free on Supabase | Stores students, trips, groups, who owes what. One database transaction guarantees two people never get the same last seat |
-| Sign-in | One-time code emailed with Resend | No passwords. Rutgers emails only, code expires in 10 minutes |
+| Sign-in | One-time code emailed with Brevo (free, 300/day) | No passwords. Scarletmail addresses only, code expires in 10 minutes |
 | Maps | Google Maps / Places API | Address search, travel times, map of the pickup spot |
 | Tests | Jasmine (unit) and Cucumber.js (acceptance) | Every must-have user story gets a scenario |
 | Hosting | Render (API) and Vercel (client), both free | Public URL for the demo |
@@ -29,7 +29,7 @@ Everyone owns one slice of the code. You build it on your own branch, open a pul
 |---|---|---|---|
 | Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip. Also owns the UI: one styling pass across all screens so the app looks like the proposal deck and works on a phone | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx`, `client/src/styles.css` |
 | Joshua In | `joshua` | Database on Supabase + putting the app online (Render + Vercel) | `server/src/db/store.js`, `server/src/db/schema.sql`, hosting dashboards |
-| Aaron Chu | `aaron` | Sign-in emails via Resend, "resend code" button with a countdown | `server/src/lib/email.js`, `client/src/pages/SignIn.jsx` |
+| Aaron Chu | `aaron` | Sign-in emails via Brevo, "resend code" button with a countdown | `server/src/lib/email.js`, `client/src/pages/SignIn.jsx` |
 | Azra Bano | `azra` | Trip detail page, "my trips" page, cancel a trip you posted | new `client/src/pages/TripDetail.jsx`, new `client/src/pages/MyTrips.jsx`, `server/src/routes/trips.js` |
 | Chris Savage | `chris` | Profile page (name + Venmo handle), filter trips by campus and day, seed data for the demo | new `client/src/pages/Profile.jsx`, `client/src/pages/Trips.jsx`, new `server/src/db/seed.js` |
 | Anthony Morales | `anthony` | Driver application form + admin approve/reject, Cucumber acceptance tests | new `server/src/routes/drivers.js`, new `client/src/pages/DriverApply.jsx`, `server/features/` |
@@ -108,7 +108,7 @@ Matching, groups, fare split and the emergency button are the Nov 9 to 22 phase.
 
 ```bash
 npm install
-cp .env.example .env
+cp .env.example server/.env   # the server reads .env from server/
 npm run dev
 ```
 
@@ -132,7 +132,7 @@ Each is one variable in `.env`. See `.env.example`.
 | Service | Variable | What it unlocks | Who owns it |
 |---|---|---|---|
 | Supabase (Postgres) | `DATABASE_URL` | Persistent data. Run `npm run db:schema` once to create tables. | Joshua (also deploys) |
-| Resend | `RESEND_API_KEY`, `EMAIL_FROM` | Real sign-in emails instead of console output | Aaron |
+| Brevo | `BREVO_API_KEY`, `EMAIL_FROM` (a sender verified in Brevo) | Real sign-in emails instead of console output | Aaron |
 | Google Maps | `VITE_GOOGLE_MAPS_KEY` | Address autocomplete and the pickup map | Zen |
 
 ## Layout
