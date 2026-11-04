@@ -64,17 +64,19 @@ Check the box when it is merged to `main`.
 - [x] 40 tests, including end-to-end tests through the real API
 
 **Before the midterm (Nov 4 freeze)**
-- [ ] Real address search with Google Maps, and a map of the pickup spot (Zen)
+- [x] Real address search with Google Maps, and a map of the pickup spot (Zen)
 - [ ] UI pass: proposal-deck look, phone layout, empty and loading states (Zen)
 - [ ] Real database on Supabase so data doesn't disappear (Joshua)
-- [ ] Put the app on the internet at a public link (Joshua)
-- [ ] Real sign-in emails instead of the console, resend button, countdown (Aaron)
+- [x] Site on Vercel (Joshua, Azra)
+- [ ] API on Render and VITE_API_URL set in Vercel (Joshua)
+- [x] Real sign-in emails instead of the console, resend button, countdown (Aaron)
 - [x] Trip detail page, my trips page, cancel a trip (Azra)
 - [x] Request a seat, no double-booking the last seat (Azra)
 - [x] Give up your seat (Azra)
 - [x] Emergency button: hold 2s, 5s to cancel, opens 911, alerts your emergency contact with location, RUPD resources (Azra)
 - [ ] Profile page, trip filters, fake accounts and trips for the demo (Chris)
-- [ ] Driver application and admin approval, Cucumber tests (Anthony)
+- [x] Driver application and admin approval (Anthony)
+- [ ] Cucumber acceptance tests (Anthony)
 - [ ] Matching rules spec and a tested matching function (Abuchi)
 - [ ] Every user story as a GitHub issue (Anthony)
 - [ ] Demo script and backup video (Chris)
