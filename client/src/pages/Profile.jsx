@@ -1,29 +1,22 @@
 import { useEffect, useState } from 'react';
+import { api } from '../lib/api.js';
 import './Profile.css';
 
-export default function Profile() {
+export default function Profile({ user, onUserChange }) {
   const [name, setName] = useState('');
   const [venmo, setVenmo] = useState('');
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
 
-  // Load saved profile information
+  // Load the profile from the signed-in account
   useEffect(() => {
-    try {
-      const storedProfile = JSON.parse(
-        localStorage.getItem('rutgersRideProfile') || '{}'
-      );
-
-      setName(storedProfile.name || '');
-      setVenmo(storedProfile.venmo || '');
-    } catch {
-      setError('Could not load saved profile.');
-    }
-  }, []);
+    setName(user?.displayName || '');
+    setVenmo((user?.paymentHandle || '').replace(/^@/, ''));
+  }, [user]);
 
   // Save profile information
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     setError('');
     setSaved(false);
@@ -48,11 +41,9 @@ export default function Profile() {
     };
 
     try {
-      localStorage.setItem(
-        'rutgersRideProfile',
-        JSON.stringify(profile)
-      );
-
+      // Saved on the account, so riders in your group see the right handle
+      const { user: updated } = await api.updateMe({ displayName: profile.name, paymentHandle: '@' + profile.venmo });
+      onUserChange?.(updated);
       setName(cleanName);
       setVenmo(cleanVenmo);
       setEditing(false);
@@ -190,14 +181,8 @@ export default function Profile() {
                 type="button"
                 className="cancel-profile-button"
                 onClick={() => {
-                  const stored = JSON.parse(
-                    localStorage.getItem(
-                      'rutgersRideProfile'
-                    ) || '{}'
-                  );
-
-                  setName(stored.name || '');
-                  setVenmo(stored.venmo || '');
+                  setName(user?.displayName || '');
+                  setVenmo((user?.paymentHandle || '').replace(/^@/, ''));
                   setEditing(false);
                   setError('');
                 }}

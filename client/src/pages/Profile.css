@@ -1,0 +1,19 @@
+/* Profile page, matches the site's card style in styles.css */
+.profile-page { max-width: 480px; margin: 0 auto; }
+.profile-header { margin-bottom: 14px; }
+.profile-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; text-align: center; }
+.profile-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--red); color: #fff; font-size: 1.6rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+.profile-card h2 { margin: 0; }
+.profile-subtitle { color: var(--muted); margin: 4px 0 16px; }
+.profile-success { color: #1e7a3a; }
+.profile-error { color: var(--red); }
+.profile-info, .profile-form { display: flex; flex-direction: column; gap: 14px; text-align: left; }
+.profile-field label { display: block; font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.profile-field p { margin: 0; }
+.venmo-input { display: flex; align-items: center; gap: 6px; }
+.venmo-input span { color: var(--muted); font-weight: 600; }
+.venmo-input input { flex: 1; }
+.venmo-button, .save-profile-button, .edit-profile-button, .cancel-profile-button { font: inherit; font-weight: 700; padding: 11px 16px; border-radius: 10px; border: 0; cursor: pointer; text-align: center; text-decoration: none; }
+.venmo-button { background: #008CFF; color: #fff; display: block; }
+.save-profile-button, .edit-profile-button { background: var(--red); color: #fff; }
+.cancel-profile-button { background: #fff; color: var(--red); border: 1px solid var(--red); }

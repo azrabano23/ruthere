@@ -7,6 +7,7 @@ import Trips from './pages/Trips.jsx';
 import TripDetail from './pages/TripDetail.jsx';
 import MyTrips from './pages/MyTrips.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
+import Profile from './pages/Profile.jsx';
 
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
@@ -28,6 +29,7 @@ export default function App() {
             <Link to="/my-trips">My trips</Link>
             <Link to="/driver-dashboard">Driver Dashboard</Link>
             <Link to="/post">Post a trip</Link>
+            <Link to="/profile">Profile</Link>
             <button className="linkish" onClick={signOut}>Sign out ({user.email.split('@')[0]})</button>
           </>) : <Link to="/">Sign in</Link>}
         </nav>
@@ -38,6 +40,7 @@ export default function App() {
           <Route path="/trips" element={user ? <Trips /> : <Navigate to="/" />} />
           <Route path="/trips/:id" element={user ? <TripDetail user={user} onUserChange={setUser} /> : <Navigate to="/" />} />
           <Route path="/my-trips" element={user ? <MyTrips /> : <Navigate to="/" />} />
+          <Route path="/profile" element={user ? <Profile user={user} onUserChange={setUser} /> : <Navigate to="/" />} />
           <Route path="/driver-dashboard" element={user ? <DriverDashboard /> : <Navigate to="/" />} />
           <Route path="/post" element={user ? <PostTrip /> : <Navigate to="/" />} />
         </Routes>
