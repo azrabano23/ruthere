@@ -1,6 +1,6 @@
-const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY?.trim();
 
-export default function PickupMap({ place }) {
+export default function PickupMap({ place, preview = false }) {
     if (!place) return null;
 
     const hasCoordinates =
@@ -16,31 +16,41 @@ export default function PickupMap({ place }) {
     if (!location) return null;
 
     const query = encodeURIComponent(location);
-    const mapsLink = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    const mapsLink =
+    `https://www.google.com/maps/search/?api=1&query=${query}`;
 
     return (
     <div className="pickup-map">
-        <div className="pickup-map-heading">
+    <div className="pickup-map-heading">
         <strong>Pickup location</strong>
-        <a href={mapsLink} target="_blank" rel="noopener noreferrer">
+        <a
+        href={mapsLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        >
         Open in Google Maps ↗
         </a>
     </div>
 
     <p className="muted">{place.label}</p>
 
-    {MAPS_KEY ? (
+    {preview && (
+        MAPS_KEY ? (
         <iframe
-        title={`Pickup location: ${place.label}`}
-        src={`https://www.google.com/maps/embed/v1/place?key=${encodeURIComponent(MAPS_KEY)}&q=${query}&zoom=16`}
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        allowFullScreen
+            title={`Pickup location: ${place.label}`}
+            src={
+            'https://www.google.com/maps/embed/v1/place' +
+            `?key=${encodeURIComponent(MAPS_KEY)}&q=${query}&zoom=16`
+            }
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
         />
-    ) : (
+        ) : (
         <p className="muted">
-        Map preview is unavailable. Use the link above to view the pickup.
+            Map preview is unavailable. Use the link above.
         </p>
+        )
     )}
     </div>
 );
