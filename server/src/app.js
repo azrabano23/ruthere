@@ -11,16 +11,16 @@ import { driversRouter } from './routes/drivers.js';
 export function createApp(store) {
   const app = express();
 
-  const allowedOrigins = (
-    process.env.CLIENT_ORIGIN ??
-    (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5173')
-  )
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+  // Who may call the API from a browser: anything in CLIENT_ORIGIN (comma separated),
+  // our Vercel deployments, and the local dev server. Cookies need credentials: true.
+  const listed = (process.env.CLIENT_ORIGIN ?? '').split(',').map((o) => o.trim()).filter(Boolean);
+  const isAllowedOrigin = (origin) =>
+    listed.includes(origin) ||
+    /^https:\/\/ruthere[a-z0-9-]*\.vercel\.app$/.test(origin) ||
+    (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin));
 
   app.use(cors({
-    origin: allowedOrigins,
+    origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)),
     credentials: true,
   }));
 

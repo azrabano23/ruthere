@@ -145,3 +145,21 @@ describe('API: safety', () => {
     expect(r.body.notified).toBe('Mom');
   });
 });
+
+describe('API: browser origins', () => {
+  let ctx;
+  beforeAll(async () => { ctx = await startServer(); });
+  afterAll(() => ctx.server.close());
+
+  const ask = (origin) => fetch(ctx.base + '/health', { headers: { Origin: origin } }).then((r) => r.headers.get('access-control-allow-origin'));
+  it('allows our vercel deployments', async () => {
+    expect(await ask('https://ruthere-5buf.vercel.app')).toBe('https://ruthere-5buf.vercel.app');
+    expect(await ask('https://ruthere-git-zen-azra-banos-projects.vercel.app')).toBe('https://ruthere-git-zen-azra-banos-projects.vercel.app');
+  });
+  it('allows the local dev server outside production', async () => {
+    expect(await ask('http://localhost:5173')).toBe('http://localhost:5173');
+  });
+  it('refuses other sites', async () => {
+    expect(await ask('https://evil.example.com')).toBeNull();
+  });
+});
