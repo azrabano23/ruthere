@@ -1,8 +1,9 @@
+// In production the API is reached through Vercel's /api rewrite (see vercel.json), so the
+// session cookie is first-party. Calling Render directly makes it a cross-site cookie that
+// browsers drop, and every request after sign-in fails with "Sign in first".
 const BASE = (
   import.meta.env.VITE_API_URL?.trim() ||
-  (import.meta.env.DEV
-    ? 'http://localhost:4000'
-    : 'https://ruthere-wew4.onrender.com')
+  (import.meta.env.DEV ? 'http://localhost:4000' : '/api')
 ).replace(/\/$/, '');
 
 async function call(path, { method = 'GET', body } = {}) {
