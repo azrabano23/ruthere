@@ -61,7 +61,7 @@ Check the box when it is merged to `main`.
 - [x] Pick a campus spot as the address (works without a Google key)
 - [x] Database tables designed
 - [x] Tests run automatically on every pull request
-- [x] 40 tests, including end-to-end tests through the real API
+- [x] 82 tests: server rules, API end-to-end, and client pages
 
 **Before the midterm (Nov 4 freeze)**
 - [x] Real address search with Google Maps, and a map of the pickup spot (Zen)
@@ -123,7 +123,7 @@ Run the tests:
 npm test
 ```
 
-40 Jasmine specs: pure rules (`server/spec/*Spec.js`), the last-seat race, and end-to-end API tests that start the real server on a random port (`server/spec/apiSpec.js`).
+Server: 73 Jasmine specs covering pure rules, the last-seat race, driver approval, matching, and end-to-end API tests that start the real server on a random port (`server/spec/`). Client: 9 Vitest + Testing Library specs for the sign-in, trips and trip detail pages (`client/src/test/`). CI runs both on every pull request.
 
 ## Turning on the real services
 
