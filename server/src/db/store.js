@@ -13,6 +13,7 @@ function memoryStore() {
   const driverApps = new Map();
   return {
     kind: 'memory',
+    async ping() { return true; },
     driverApplications: {
       async create(userId, { carMakeModel, carColor, licensePlate, seatsAvailable }) {
         if ([...driverApps.values()].some((a) => a.userId === userId && a.status === 'pending')) throw Object.assign(new Error('Already pending'), { code: 'ALREADY_PENDING' });
@@ -73,6 +74,14 @@ async function pgStore(connectionString) {
   // instead of hanging the request forever.
   const pool = new pg.Pool({ connectionString, ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }, connectionTimeoutMillis: 5000 });
   pool.on('error', (err) => console.error('[db] idle client error', err.message));
+  pool.query('select 1').then(
+    () => console.log('[db] connected'),
+    (err) => {
+      const detail = err.message || (err.errors ?? []).map((e) => e.message).join('; ');
+      console.error(`[db] cannot reach the database: ${detail}`);
+      if (/ENETUNREACH|EHOSTUNREACH|ETIMEDOUT|timeout/i.test(detail)) console.error('[db] hint: on Supabase use the "Session pooler" connection string (IPv4), not the direct one; Render has no IPv6.');
+    },
+  );
   const userRow = (r) => r && { id: r.id, email: r.email, displayName: r.display_name, paymentHandle: r.payment_handle, isDriverApproved: r.is_driver_approved, emergencyContactName: r.emergency_contact_name, emergencyContactPhone: r.emergency_contact_phone, createdAt: r.created_at };
   const appRow = (r) => r && { id: r.id, userId: r.user_id, carMakeModel: r.car_make_model, carColor: r.car_color, licensePlate: r.license_plate, seatsAvailable: r.seats_available, status: r.status, reviewedBy: r.reviewed_by, reviewedAt: r.reviewed_at, reviewNote: r.review_note, createdAt: r.created_at };
   const tripRow = (r) => r && ({
@@ -83,6 +92,7 @@ async function pgStore(connectionString) {
   });
   return {
     kind: 'postgres',
+    async ping() { await pool.query('select 1'); return true; },
     driverApplications: {
       async create(userId, { carMakeModel, carColor, licensePlate, seatsAvailable }) {
         try {

@@ -163,3 +163,19 @@ describe('API: browser origins', () => {
     expect(await ask('https://evil.example.com')).toBeNull();
   });
 });
+
+describe('API: health and error messages', () => {
+  it('reports the database in the health check', async () => {
+    const ctx = await startServer();
+    const r = await fetch(ctx.base + '/health').then((x) => x.json());
+    expect(r).toEqual({ ok: true, store: 'memory', db: 'ok' });
+    ctx.server.close();
+  });
+  it('turns an AggregateError into a readable message', async () => {
+    const { describeError } = await import('../src/app.js');
+    const agg = new AggregateError([new Error('connect ENETUNREACH 2600::1:5432')], '');
+    expect(describeError(agg)).toBe('connect ENETUNREACH 2600::1:5432');
+    expect(describeError(new Error('plain'))).toBe('plain');
+    expect(describeError({})).toBe('Server error');
+  });
+});

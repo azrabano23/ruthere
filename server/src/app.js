@@ -8,6 +8,13 @@ import { pickupSpotsRouter } from './routes/pickupSpots.js';
 import { safetyRouter } from './routes/safety.js';
 import { driversRouter } from './routes/drivers.js';
 
+/** A readable message for any error, including Node's AggregateError (empty message, details in .errors). */
+export function describeError(err) {
+  if (err?.message) return err.message;
+  const inner = Array.isArray(err?.errors) ? err.errors.map((e) => e?.message).filter(Boolean) : [];
+  return inner.length ? inner.join('; ') : 'Server error';
+}
+
 export function createApp(store) {
   const app = express();
     app.use((req, _res, next) => {
@@ -31,8 +38,10 @@ export function createApp(store) {
   app.use(express.json());
   app.use(cookieParser());
 
-  app.get('/health', (_req, res) => {
-    res.json({ ok: true, store: store.kind });
+  // Touches the database so the health URL tells the truth about the whole stack.
+  app.get('/health', async (_req, res) => {
+    const db = await store.ping().then(() => 'ok').catch((e) => `unreachable: ${describeError(e)}`);
+    res.status(db === 'ok' ? 200 : 503).json({ ok: db === 'ok', store: store.kind, db });
   });
 
   app.use('/auth', authRouter(store));
@@ -43,9 +52,7 @@ export function createApp(store) {
 
   app.use((err, _req, res, _next) => {
     console.error(err);
-    res.status(err.status ?? 500).json({
-      error: err.message ?? 'Server error',
-    });
+    res.status(err.status ?? 500).json({ error: describeError(err) });
   });
 
   return app;
