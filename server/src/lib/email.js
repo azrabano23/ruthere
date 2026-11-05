@@ -23,6 +23,7 @@ export async function sendCode(email, code, { fetch = globalThis.fetch } = {}) {
       subject: `${code} is your RUThere sign-in code`,
       textContent: `Your RUThere code is ${code}. It expires in 10 minutes.`,
     }),
+    signal: AbortSignal.timeout(10_000),
   }).catch((err) => ({ ok: false, status: 0, json: async () => ({ message: err.message }) }));
   if (!res.ok) {
     const { message } = await res.json().catch(() => ({}));

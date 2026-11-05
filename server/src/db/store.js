@@ -69,7 +69,10 @@ function memoryStore() {
 
 async function pgStore(connectionString) {
   const { default: pg } = await import('pg');
-  const pool = new pg.Pool({ connectionString, ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false } });
+  // connectionTimeoutMillis: a database we can't reach (wrong URL, IPv6-only host) errors in 5s
+  // instead of hanging the request forever.
+  const pool = new pg.Pool({ connectionString, ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false }, connectionTimeoutMillis: 5000 });
+  pool.on('error', (err) => console.error('[db] idle client error', err.message));
   const userRow = (r) => r && { id: r.id, email: r.email, displayName: r.display_name, paymentHandle: r.payment_handle, isDriverApproved: r.is_driver_approved, emergencyContactName: r.emergency_contact_name, emergencyContactPhone: r.emergency_contact_phone, createdAt: r.created_at };
   const appRow = (r) => r && { id: r.id, userId: r.user_id, carMakeModel: r.car_make_model, carColor: r.car_color, licensePlate: r.license_plate, seatsAvailable: r.seats_available, status: r.status, reviewedBy: r.reviewed_by, reviewedAt: r.reviewed_at, reviewNote: r.review_note, createdAt: r.created_at };
   const tripRow = (r) => r && ({

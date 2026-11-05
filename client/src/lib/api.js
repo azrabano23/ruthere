@@ -6,12 +6,19 @@ const BASE = (
 ).replace(/\/$/, '');
 
 async function call(path, { method = 'GET', body } = {}) {
-  const res = await fetch(BASE + path, {
-    method,
-    credentials: 'include',
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(BASE + path, {
+      method,
+      credentials: 'include',
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(20_000), // never leave a button spinning forever
+    });
+  } catch (err) {
+    const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError';
+    throw Object.assign(new Error(timedOut ? 'The server took too long to answer. Please try again.' : 'Failed to fetch'), { status: 0 });
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data.error ?? (data.errors ?? []).join(', ') ?? 'Request failed'), { data, status: res.status });
   return data;
