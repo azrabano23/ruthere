@@ -421,3 +421,12 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
     padding: 18px;
   }
 }
+
+
+/* Move Trips and My Trips headings up */
+.row.between > h1,
+.row.between > h2 {
+  position: relative;
+  top: -35px;
+}
+
