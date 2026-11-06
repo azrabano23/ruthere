@@ -341,17 +341,24 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
 }
 
 
-/* Trips page header */
-.row.between > h1 {
-  flex: 1;
-  margin: 0;
-}
-
-.row.between > .button {
+/* Consistent Post a Trip button across all pages */
+.row.between > .button,
+.row.between > a.button {
   flex: 0 0 auto;
   width: auto;
+  min-width: 0;
   padding: 12px 24px;
+  white-space: nowrap;
+  margin-left: auto;
 }
+
+/* Keep page headings aligned */
+.row.between > h1,
+.row.between > h2 {
+  flex: 0 1 auto;
+  margin: 0 20px 0 0;
+}
+
 
 /* Trip filter layout */
 .trip-filters {
