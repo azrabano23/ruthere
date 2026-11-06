@@ -341,7 +341,7 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
 }
 
 
-/* Consistent Post a Trip button across all pages */
+/* Consistent Post a Trip buttons */
 .row.between > .button,
 .row.between > a.button {
   flex: 0 0 auto;
@@ -350,9 +350,16 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
   padding: 12px 24px;
   white-space: nowrap;
   margin-left: auto;
-  position: relative;
-  top: 12px;
+  position: static;
 }
+
+/* Align headers and space out content */
+.row.between {
+  align-items: center;
+  min-height: 100px;
+  margin-bottom: 24px;
+}
+
 
 
 /* Keep page headings aligned */
