@@ -339,3 +339,68 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
     flex-direction: column;
   }
 }
+
+
+/* Trips page header */
+.row.between > h1 {
+  flex: 1;
+  margin: 0;
+}
+
+.row.between > .button {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 12px 24px;
+}
+
+/* Trip filter layout */
+.trip-filters {
+  margin-top: 20px;
+  padding: 24px;
+}
+
+.trip-filters h2 {
+  margin: 0 0 24px;
+}
+
+.trip-filters .filter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.trip-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trip-filters .filter-group label {
+  display: block;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.trip-filters input,
+.trip-filters select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+}
+
+.trip-filters .clear-filters {
+  align-self: flex-start;
+  width: auto;
+}
+
+/* Mobile layout */
+@media (max-width: 680px) {
+  .row.between > .button {
+    align-self: flex-start;
+  }
+
+  .trip-filters {
+    padding: 18px;
+  }
+}
