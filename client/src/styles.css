@@ -350,7 +350,10 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
   padding: 12px 24px;
   white-space: nowrap;
   margin-left: auto;
+  position: relative;
+  top: 12px;
 }
+
 
 /* Keep page headings aligned */
 .row.between > h1,
