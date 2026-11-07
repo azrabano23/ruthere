@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Link, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { api } from './lib/api.js';
 import SignIn from './pages/SignIn.jsx';
 import PostTrip from './pages/PostTrip.jsx';
@@ -12,6 +12,7 @@ import Profile from './pages/Profile.jsx';
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
   const navigate = useNavigate();
+  const onLanding = useLocation().pathname === '/';
   const [theme, setTheme] = useState(() => localStorage.getItem('ruthere-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('ruthere-theme', theme); }, [theme]);
   function signedIn(nextUser) { setUser(nextUser); navigate(sessionStorage.getItem('ruthere-role') === 'driver' ? '/post' : '/trips'); }
@@ -24,7 +25,7 @@ export default function App() {
   if (user === undefined) return <main className="shell"><p>Loading…</p></main>;
 
   return (
-    <div className="shell">
+    <div className={`shell${onLanding && !user ? ' on-landing' : ''}`}>
       <header className="topbar">
         <Link to="/" className="brand">Ru<span>There</span></Link>
         <nav>
