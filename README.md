@@ -61,19 +61,19 @@ Check the box when it is merged to `main`.
 - [x] Pick a campus spot as the address (works without a Google key)
 - [x] Database tables designed
 - [x] Tests run automatically on every pull request
-- [x] 82 tests: server rules, API end-to-end, and client pages
+- [x] 84 tests (75 server, 9 client): server rules, API end-to-end, and client pages
 
 **Before the midterm (Nov 4 freeze)**
 - [x] Real address search with Google Maps, and a map of the pickup spot (Zen)
 - [ ] UI pass: proposal-deck look, phone layout, empty and loading states (Zen)
-- [ ] Real database on Supabase so data doesn't disappear (Joshua)
+- [x] Real database on Supabase so data doesn't disappear (Joshua)
 - [x] Site on Vercel (Joshua, Azra)
 - [x] API on Render, site points at it by default (Joshua, Azra)
 - [x] Real sign-in emails instead of the console, resend button, countdown (Aaron)
 - [x] Trip detail page, my trips page, cancel a trip (Azra)
 - [x] Request a seat, no double-booking the last seat (Azra)
 - [x] Give up your seat (Azra)
-- [x] Emergency button: hold 2s, 5s to cancel, opens 911, alerts your emergency contact with location, RUPD resources (Azra)
+- [x] Emergency button: hold 2s, 5s to cancel, opens 911, builds an alert with your location for your emergency contact (logged on the server until real SMS is added), RUPD resources (Azra)
 - [x] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [x] Driver application and admin approval (Anthony)
 - [ ] Cucumber acceptance tests (Anthony)
@@ -102,7 +102,7 @@ Check the box when it is merged to `main`.
 - **Safety.** On every trip you're on: 911 and RUPD one tap away, and an emergency button that you hold for 2 seconds, with 5 seconds to cancel, which sends your live location and trip details to your emergency contact and opens the dialer with 911.
 - **Address search.** Google Places Autocomplete when a key is set, otherwise a built-in list of the campus pickup spots from the proposal.
 
-Matching, groups, fare split and the emergency button are the Nov 9 to 22 phase. The schema already has the tables they need, and `splitFareCents` is in place and tested.
+Matching, groups and the fare split are the Nov 9 to 22 phase. The emergency button is already in. The schema already has the tables they need, and `splitFareCents` is in place and tested.
 
 ## Run it in two minutes (no keys needed)
 
@@ -123,7 +123,7 @@ Run the tests:
 npm test
 ```
 
-Server: 73 Jasmine specs covering pure rules, the last-seat race, driver approval, matching, and end-to-end API tests that start the real server on a random port (`server/spec/`). Client: 9 Vitest + Testing Library specs for the sign-in, trips and trip detail pages (`client/src/test/`). CI runs both on every pull request.
+Server: 75 Jasmine specs covering pure rules, the last-seat race, driver approval, matching, and end-to-end API tests that start the real server on a random port (`server/spec/`). Client: 9 Vitest + Testing Library specs for the sign-in, trips and trip detail pages (`client/src/test/`). CI runs both on every pull request.
 
 ## Turning on the real services
 
