@@ -1,10 +1,27 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
+import { startLandingMotion } from '../lib/landingMotion.js';
+import './Landing.css';
 
 const RESEND_COOLDOWN_S = 30; // matches RESEND_COOLDOWN_MS on the server, which has the final say
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const ROUTE = 'M30 95 C100 20 110 220 210 155 S300 10 370 85 S470 230 600 110';
+const STOPS = [[30, 95], [145, 154], [270, 92], [370, 85], [470, 159], [600, 110]];
 
 export default function SignIn({ onSignedIn }) {
+  const rootRef = useRef(null);
+  const stageRef = useRef(null);
+  const canvasRef = useRef(null);
+  const routeRef = useRef(null);
+  // Scroll animations and the 3D car. Loaded lazily; skipped where there is no real browser (tests).
+  useEffect(() => startLandingMotion({ root: rootRef.current, stage: stageRef.current, canvas: canvasRef.current, route: routeRef.current }), []);
+  // Hero "Sign up" button: jump straight to the sign-in card and put the cursor in the email box.
+  function goToSignUp() {
+    const card = document.getElementById('signin');
+    const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    card?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'center' });
+    card?.querySelector('input')?.focus({ preventScroll: true });
+  }
   const [role, setRole] = useState(() => sessionStorage.getItem('ruthere-role') || 'rider');
   function chooseRole(next) { setRole(next); sessionStorage.setItem('ruthere-role', next); }
   const [email, setEmail] = useState('');
@@ -67,17 +84,28 @@ export default function SignIn({ onSignedIn }) {
   }
 
   return (
-    <div className="welcome">
-      <section className="hero-copy">
-        <div className="eyebrow"><span className="status-dot" /> THE RUTGERS WAY TO GET THERE</div>
-        <h1>Students,<br /><em>driven by<br />students.</em></h1>
-        <p className="hero-description">Campus, off campus, and everything in between.<br className="desktop-break" /> Share the journey with your Rutgers community.</p>
-        <div className="campus-art" aria-label="Destinations include Busch, Livingston, College Ave, Cook/Douglass, Off campus, and New Brunswick Train Station">
-          <svg className="route-art" viewBox="0 0 640 230" aria-hidden="true"><path className="route-shadow" d="M30 95 C100 20 110 220 210 155 S300 10 370 85 S470 230 600 110"/><path className="route-line" d="M30 95 C100 20 110 220 210 155 S300 10 370 85 S470 230 600 110"/>{[[30,95],[145,154],[270,92],[370,85],[470,159],[600,110]].map(([cx,cy],i)=><circle key={i} cx={cx} cy={cy} r="8" />)}</svg>
-          <span className="stop stop-1">Busch</span><span className="stop stop-2">Livingston</span><span className="stop stop-3">College Ave</span><span className="stop stop-4">Cook/Douglass</span><span className="stop stop-5">Off campus</span><span className="stop stop-6">New Brunswick<br />Train Station</span>
-          <div className="art-caption">YOUR CAMPUS. YOUR PEOPLE. YOUR NEXT STOP.</div>
+    <div className="landing" ref={rootRef}>
+      <section className="stage" ref={stageRef}>
+        <div className="stage-pin">
+          <canvas className="stage-car" ref={canvasRef} aria-hidden="true" />
+          <div className="stage-copy hero-copy">
+            <div className="eyebrow"><span className="status-dot" /> THE RUTGERS WAY TO GET THERE</div>
+            <h1>Students,<br /><em>driven by<br />students.</em></h1>
+            <p className="hero-description">Campus, off campus, and everything in between.<br className="desktop-break" /> Share the journey with your Rutgers community.</p>
+            <div className="hero-actions"><button type="button" className="hero-cta" onClick={goToSignUp}>Sign up →</button></div>
+          </div>
+          <p className="stage-caption">YOUR CAMPUS. YOUR PEOPLE. YOUR NEXT STOP.</p>
         </div>
       </section>
+
+      <section className="route-section" ref={routeRef}>
+        <div className="campus-art" aria-label="Destinations include Busch, Livingston, College Ave, Cook/Douglass, Off campus, and New Brunswick Train Station">
+          <svg className="route-art" viewBox="0 0 640 230" aria-hidden="true"><path className="route-shadow" d={ROUTE}/><path className="route-line" d={ROUTE}/>{STOPS.map(([cx,cy],i)=><circle key={i} cx={cx} cy={cy} r="8" />)}</svg>
+          <span className="stop stop-1">Busch</span><span className="stop stop-2">Livingston</span><span className="stop stop-3">College Ave</span><span className="stop stop-4">Cook/Douglass</span><span className="stop stop-5">Off campus</span><span className="stop stop-6">New Brunswick<br />Train Station</span>
+        </div>
+      </section>
+
+      <section className="signin-section">
       <section className="card auth-card" id="signin" aria-labelledby="signin-heading">
         <div className="role-tabs" role="group" aria-label="Choose your travel role">
           <button type="button" aria-pressed={role === 'rider'} className={role === 'rider' ? 'active' : ''} onClick={() => chooseRole('rider')}>Rider</button>
@@ -141,6 +169,7 @@ export default function SignIn({ onSignedIn }) {
           ? 'Want to drive? Become a driver ↗'
           : 'Need a ride? Find a ride ↗'}
       </button>
+    </section>
     </section>
     </div>
   );
