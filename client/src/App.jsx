@@ -8,6 +8,7 @@ import TripDetail from './pages/TripDetail.jsx';
 import MyTrips from './pages/MyTrips.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import Profile from './pages/Profile.jsx';
+import LiveNotices from './components/LiveNotices.jsx';
 
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
@@ -41,6 +42,7 @@ export default function App() {
         </nav>
       </header>
       <main>
+        {user && <LiveNotices />}
         <Routes>
           <Route path="/" element={user ? <Navigate to="/trips" /> : <SignIn onSignedIn={signedIn} />} />
           <Route path="/trips" element={user ? <Trips /> : <Navigate to="/" />} />

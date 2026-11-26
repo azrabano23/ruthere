@@ -29,6 +29,7 @@ export const api = {
   requestCode: (email) => call('/auth/request-code', { method: 'POST', body: { email } }),
   verify: (email, code) => call('/auth/verify', { method: 'POST', body: { email, code } }),
   me: () => call('/auth/me'),
+  socketToken: () => call('/auth/socket-token'),
   updateMe: (patch) => call('/auth/me', { method: 'PATCH', body: patch }),
   signOut: () => call('/auth/signout', { method: 'POST' }),
   pickupSpots: () => call('/pickup-spots'),
