@@ -8,6 +8,7 @@ import { pickupSpotsRouter } from './routes/pickupSpots.js';
 import { safetyRouter } from './routes/safety.js';
 import { driversRouter } from './routes/drivers.js';
 import { trustRouter } from './routes/trust.js';
+import { isAllowedOrigin } from './lib/origins.js';
 
 /** A readable message for any error, including Node's AggregateError (empty message, details in .errors). */
 export function describeError(err) {
@@ -22,14 +23,6 @@ export function createApp(store) {
     req.url = req.url.replace(/^\/api(?=\/|\?|$)/, '') || '/';
     next();
   });
-
-  // Who may call the API from a browser: anything in CLIENT_ORIGIN (comma separated),
-  // our Vercel deployments, and the local dev server. Cookies need credentials: true.
-  const listed = (process.env.CLIENT_ORIGIN ?? '').split(',').map((o) => o.trim()).filter(Boolean);
-  const isAllowedOrigin = (origin) =>
-    listed.includes(origin) ||
-    /^https:\/\/ruthere[a-z0-9-]*\.vercel\.app$/.test(origin) ||
-    (process.env.NODE_ENV !== 'production' && /^http:\/\/localhost:\d+$/.test(origin));
 
   app.use(cors({
     origin: (origin, cb) => cb(null, !origin || isAllowedOrigin(origin)),

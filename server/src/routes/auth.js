@@ -1,6 +1,6 @@
 // Sign-in with a one-time code emailed to a Rutgers address, plus the current user's profile.
 import { Router } from 'express';
-import { allowedDomains, isRutgersEmail, generateCode, hashCode, checkCode, signSession, requireUser, resendWaitSeconds, CODE_TTL_MS } from '../lib/auth.js';
+import { allowedDomains, isRutgersEmail, generateCode, hashCode, checkCode, signSession, signSocketToken, requireUser, resendWaitSeconds, CODE_TTL_MS } from '../lib/auth.js';
 import { sendCode } from '../lib/email.js';
 import { isEmailish } from '../lib/safety.js';
 
@@ -45,6 +45,9 @@ export function authRouter(store) {
   });
 
   r.get('/me', requireUser(store), (req, res) => res.json({ user: req.user }));
+
+  // Token for the live-update socket, which connects straight to the API host.
+  r.get('/socket-token', requireUser(store), (req, res) => res.json({ token: signSocketToken(req.user) }));
 
   r.patch('/me', requireUser(store), async (req, res, next) => {
     try {

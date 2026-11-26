@@ -53,6 +53,21 @@ export function signSession(user) {
   return jwt.sign({ sub: user.id, email: user.email }, process.env.SESSION_SECRET ?? 'dev-secret', { expiresIn: '30d' });
 }
 
+export const SOCKET_TOKEN_TTL = '5m';
+
+/** Short-lived token the browser hands to the live-update socket (the session cookie can't reach Render directly). */
+export function signSocketToken(user) {
+  return jwt.sign({ sub: user.id, purpose: 'socket' }, process.env.SESSION_SECRET ?? 'dev-secret', { expiresIn: SOCKET_TOKEN_TTL });
+}
+
+/** The token's payload when it is a valid, unexpired socket token; otherwise null. */
+export function verifySocketToken(token) {
+  try {
+    const payload = jwt.verify(String(token), process.env.SESSION_SECRET ?? 'dev-secret');
+    return payload?.purpose === 'socket' && payload.sub ? payload : null;
+  } catch { return null; }
+}
+
 export function requireUser(store) {
   return async (req, res, next) => {
     try {
