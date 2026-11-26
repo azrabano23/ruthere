@@ -3,6 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api.js';
 import SafetyPanel from '../components/SafetyPanel.jsx';
 import PickupMap from '../components/PickupMap.jsx';
+import ReportBlock from '../components/ReportBlock.jsx';
+
+/** What to tell someone who just gave up a seat, including a late-cancel strike if they got one. */
+function strikeNote({ strike, strikes, suspendedUntil }) {
+  if (!strike) return 'You gave up your seat.';
+  if (suspendedUntil) return `You gave up your seat less than an hour before departure. That's your third strike in 30 days, so you can't request rides until ${fmt(suspendedUntil)}.`;
+  return `You gave up your seat less than an hour before departure, so you got a strike (${strikes} of 3 in 30 days). Three strikes pause ride requests for a week.`;
+}
 
 const fmt = (iso) => new Date(iso).toLocaleString([], { weekday: 'long', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -16,9 +24,9 @@ export default function TripDetail({ user, onUserChange }) {
     if (!confirm('Give up your seat? Someone else can take it.')) return;
     setBusy(true); setMsg('');
     try {
-      const { seatsLeft } = await api.giveUpSeat(trip.id);
-      setTrip({ ...trip, joined: false, seatsLeft });
-      setMsg('You gave up your seat.');
+      const r = await api.giveUpSeat(trip.id);
+      setTrip({ ...trip, joined: false, seatsLeft: r.seatsLeft, people: [] });
+      setMsg(strikeNote(r));
     } catch (err) { setMsg(err.message); } finally { setBusy(false); }
   }
 
@@ -26,7 +34,9 @@ export default function TripDetail({ user, onUserChange }) {
     setBusy(true); setMsg('');
     try {
       const { seatsLeft } = await api.requestSeat(trip.id);
-      setTrip({ ...trip, joined: true, seatsLeft });
+      // Reload so the "People on this trip" list (for reporting or blocking) appears straight away.
+      const fresh = await api.trip(trip.id).catch(() => null);
+      setTrip({ ...trip, ...(fresh ?? {}), joined: true, seatsLeft });
       setMsg("You're in. The pickup spot and the group's details will show here.");
     } catch (err) {
       setMsg(err.message);
@@ -61,6 +71,9 @@ export default function TripDetail({ user, onUserChange }) {
       {mine && <Link className="button" to="/my-trips">Manage in My trips</Link>}
       {msg && <p className="muted">{msg}</p>}
       {(mine || trip.joined) && <SafetyPanel trip={trip} user={user} onUserChange={onUserChange} />}
+      {(mine || trip.joined) && (
+        <ReportBlock people={trip.people} tripId={trip.id} onBlocked={(p) => setTrip({ ...trip, people: trip.people.filter((x) => x.id !== p.id) })} />
+      )}
     </section>
   );
 }

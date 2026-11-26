@@ -14,10 +14,12 @@ export function safetyRouter(store) {
       const { tripId, location } = req.body ?? {};
       const trip = tripId ? await store.trips.findById(tripId) : null;
       const user = req.user;
-      if (!user.emergencyContactPhone) return res.status(400).json({ error: 'No emergency contact set', reason: 'no_contact' });
+      if (!user.emergencyContactPhone && !user.emergencyContactEmail) return res.status(400).json({ error: 'No emergency contact set', reason: 'no_contact' });
       const message = buildAlertMessage({ user, trip, location });
-      const result = await deliverAlert({ contact: { name: user.emergencyContactName, phone: user.emergencyContactPhone }, message });
-      res.json({ ok: true, notified: user.emergencyContactName || user.emergencyContactPhone, ...result });
+      const contact = { name: user.emergencyContactName, phone: user.emergencyContactPhone, email: user.emergencyContactEmail };
+      const result = await deliverAlert({ contact, riderName: user.displayName || user.email, message });
+      // The client uses `message` and `smsTo` to open a ready-to-send text from the rider's own phone.
+      res.json({ ok: true, notified: contact.name || contact.phone || contact.email, smsTo: contact.phone ?? null, message, ...result });
     } catch (e) { next(e); }
   });
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import './Profile.css';
+import AccountSafety from '../components/AccountSafety.jsx';
 
 export default function Profile({ user, onUserChange }) {
   const [name, setName] = useState('');
@@ -193,6 +194,8 @@ export default function Profile({ user, onUserChange }) {
           </form>
         )}
       </div>
+
+      <AccountSafety user={user} onUserChange={onUserChange} />
     </section>
   );
 }

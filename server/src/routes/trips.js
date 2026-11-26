@@ -3,13 +3,15 @@ import { Router } from 'express';
 import { requireUser } from '../lib/auth.js';
 import { validateTrip, canCancel } from '../lib/trips.js';
 import { RESERVATION_MESSAGES } from '../lib/reservations.js';
+import { hideBlocked, isSuspended, suspendedMessage } from '../lib/trust.js';
+import { hiddenIdsFor, recordLeave } from './trust.js';
 
 export function tripsRouter(store) {
   const r = Router();
 
-  // Upcoming trips, soonest first
-  r.get('/', requireUser(store), async (_req, res, next) => {
-    try { res.json(await store.trips.listUpcoming()); } catch (e) { next(e); }
+  // Upcoming trips, soonest first, minus trips from anyone you blocked or who blocked you
+  r.get('/', requireUser(store), async (req, res, next) => {
+    try { res.json(hideBlocked(await store.trips.listUpcoming(), await hiddenIdsFor(store, req.user.id))); } catch (e) { next(e); }
   });
 
   // Post a trip (midterm scope: any signed-in student can post; driver approval comes with matching phase)
@@ -35,18 +37,35 @@ export function tripsRouter(store) {
     try {
       const trip = await store.trips.findById(req.params.id);
       if (!trip) return res.status(404).json({ error: 'Not found' });
-      const [poster, reserved, joined] = await Promise.all([
+      const [poster, riderIds, hidden] = await Promise.all([
         store.users.findById(trip.posterId),
-        store.reservations.countForTrip(trip.id),
-        store.reservations.has(trip.id, req.user.id),
+        store.reservations.listRiders(trip.id),
+        hiddenIdsFor(store, req.user.id),
       ]);
-      res.json({ ...trip, posterName: poster?.displayName ?? null, seatsLeft: trip.seats - reserved, joined });
+      const joined = riderIds.includes(req.user.id);
+      const onTrip = joined || trip.posterId === req.user.id;
+      // Blocked either way: the trip is hidden, unless you're already on it (you still need the safety panel).
+      if (hidden.has(trip.posterId) && !onTrip) return res.status(404).json({ error: 'Not found' });
+      // Only people on the trip see who else is on it, so they can report or block someone.
+      const people = onTrip
+        ? await Promise.all([trip.posterId, ...riderIds].filter((id) => id !== req.user.id).map(async (id) => ({
+            id, displayName: (id === trip.posterId ? poster : await store.users.findById(id))?.displayName || 'A Rutgers student', role: id === trip.posterId ? 'driver' : 'rider',
+          })))
+        : [];
+      res.json({ ...trip, posterName: poster?.displayName ?? null, seatsLeft: trip.seats - riderIds.length, joined, people });
     } catch (e) { next(e); }
   });
 
   // Request a seat. Exactly one rider can win the last seat, even if many click at once.
   r.post('/:id/request', requireUser(store), async (req, res, next) => {
     try {
+      if (isSuspended(req.user)) return res.status(403).json({ error: suspendedMessage(req.user.suspendedUntil), reason: 'suspended' });
+      const trip = await store.trips.findById(req.params.id);
+      if (trip) {
+        const hidden = await hiddenIdsFor(store, req.user.id);
+        const others = [trip.posterId, ...(await store.reservations.listRiders(trip.id))];
+        if (others.some((id) => hidden.has(id))) return res.status(409).json({ error: "You can't join this trip", reason: 'blocked' });
+      }
       const verdict = await store.reservations.reserve(req.params.id, req.user.id);
       if (!verdict.ok) {
         const status = verdict.reason === 'not_found' ? 404 : 409;
@@ -65,7 +84,9 @@ export function tripsRouter(store) {
       const released = await store.reservations.release(trip.id, req.user.id);
       if (!released) return res.status(404).json({ error: "You don't have a seat on this trip" });
       const seatsLeft = trip.seats - (await store.reservations.countForTrip(trip.id));
-      res.json({ ok: true, seatsLeft });
+      // Less than an hour before departure counts as a late cancel (use case 6).
+      const standing = await recordLeave(store, req.user.id, trip.departsAt, { tripId: trip.id });
+      res.json({ ok: true, seatsLeft, ...standing });
     } catch (e) { next(e); }
   });
 

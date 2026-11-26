@@ -1,3 +1,5 @@
+import { sendAlertEmail } from './email.js';
+
 // Safety resources shown on every active trip. Numbers should be re-checked against
 // the Rutgers public safety site before the final demo.
 export const SAFETY_RESOURCES = [
@@ -22,9 +24,22 @@ export function buildAlertMessage({ user, trip, location, at = new Date() }) {
   return lines.join('\n');
 }
 
-/** Delivers the alert. SMS needs a provider we don't have yet, so for now this logs and,
- *  if an email key is configured, emails the contact when the phone field holds an email. */
-export async function deliverAlert({ contact, message }) {
-  if (process.env.NODE_ENV !== 'test') console.log(`\n[emergency alert] to ${contact.name} <${contact.phone}>:\n${message}\n`);
-  return { delivered: 'logged' };
+/**
+ * Delivers the alert for free. Automatic texts need a paid SMS service, so:
+ *  - the server emails the contact through Brevo when they have an email address (automatic), and
+ *  - the rider's own phone sends the text (the client opens a ready-to-send `sms:` link with `message`).
+ * Never throws: a failed email must not stop the rider from texting or calling.
+ */
+export async function deliverAlert({ contact, riderName, message }, { send = sendAlertEmail } = {}) {
+  if (process.env.NODE_ENV !== 'test') console.log(`\n[emergency alert] to ${contact.name} <${contact.phone ?? ''} ${contact.email ?? ''}>:\n${message}\n`);
+  if (!contact.email) return { emailed: false };
+  try {
+    return { emailed: await send(contact.email, { riderName, message }) };
+  } catch (err) {
+    if (process.env.NODE_ENV !== 'test') console.error(`[emergency alert] email to the contact failed: ${err.message}`);
+    return { emailed: false, emailError: true };
+  }
 }
+
+/** Loose check for the emergency contact's email field (empty is allowed: email is optional). */
+export const isEmailish = (s) => !s || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);

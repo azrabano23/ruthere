@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api.js';
+import { smsLink } from '../lib/sms.js';
 
 const HOLD_MS = 2000;
 const CANCEL_WINDOW_MS = 5000;
@@ -8,22 +9,29 @@ const CANCEL_WINDOW_MS = 5000;
  * Emergency button for an active trip (use case 7):
  *  - press and hold 2 seconds to arm
  *  - 5 second countdown to cancel an accidental press
- *  - then: send live location + trip details to the emergency contact, and open the dialer with 911
- * The app never calls 911 itself; the rider taps the call button in their phone's dialer.
+ *  - then: the server emails the emergency contact (if they have an email), the phone's dialer opens
+ *    with 911 ready, and when the rider comes back a button opens a ready-to-send text to the contact.
+ * The app never calls or texts anyone by itself: the rider taps Call and Send. That keeps it free.
  */
 export default function SafetyPanel({ trip, user, onUserChange }) {
   const [resources, setResources] = useState([]);
   const [phase, setPhase] = useState('idle'); // idle | holding | countdown | sent
   const [secondsLeft, setSecondsLeft] = useState(CANCEL_WINDOW_MS / 1000);
   const [status, setStatus] = useState('');
-  const [contact, setContact] = useState({ emergencyContactName: user?.emergencyContactName ?? '', emergencyContactPhone: user?.emergencyContactPhone ?? '' });
+  const [textLink, setTextLink] = useState(null);
+  const [contact, setContact] = useState({
+    emergencyContactName: user?.emergencyContactName ?? '',
+    emergencyContactPhone: user?.emergencyContactPhone ?? '',
+    emergencyContactEmail: user?.emergencyContactEmail ?? '',
+  });
   const holdTimer = useRef(null);
   const tick = useRef(null);
 
   useEffect(() => { api.safetyResources().then(setResources).catch(() => setResources([])); }, []);
   useEffect(() => () => { clearTimeout(holdTimer.current); clearInterval(tick.current); }, []);
 
-  const hasContact = Boolean(user?.emergencyContactPhone);
+  const hasContact = Boolean(user?.emergencyContactPhone || user?.emergencyContactEmail);
+  const contactName = user?.emergencyContactName || 'your contact';
 
   function startHold() {
     if (phase !== 'idle') return;
@@ -46,22 +54,32 @@ export default function SafetyPanel({ trip, user, onUserChange }) {
   async function fire() {
     setPhase('sent');
     const location = await getLocation();
-    try {
-      if (hasContact) {
+    if (!hasContact) {
+      setStatus('No emergency contact is set, so nobody was notified. Tap Call in your dialer to reach 911.');
+    } else {
+      try {
         const r = await api.safetyAlert({ tripId: trip?.id, location });
-        setStatus(`Your location and trip details were sent to ${r.notified}. Tap Call in your dialer to reach 911.`);
-      } else {
-        setStatus('No emergency contact is set, so nobody was notified. Tap Call in your dialer to reach 911.');
+        if (r.smsTo) setTextLink(smsLink(r.smsTo, r.message));
+        setStatus(r.emailed
+          ? `We emailed your location and trip to ${r.notified}. Tap Call in your dialer to reach 911.`
+          : 'Tap Call in your dialer to reach 911.');
+      } catch (err) {
+        // The server couldn't be reached: still let the rider text their contact from their own phone.
+        if (user.emergencyContactPhone) setTextLink(smsLink(user.emergencyContactPhone, fallbackMessage(location)));
+        setStatus(`We couldn't reach the server (${err.message}). Tap Call in your dialer to reach 911.`);
       }
-    } catch (err) { setStatus(`Could not notify your contact (${err.message}). Tap Call in your dialer to reach 911.`); }
+    }
     window.location.href = 'tel:911';
   }
 
   async function saveContact(e) {
     e.preventDefault();
-    const { user: updated } = await api.updateMe(contact);
-    onUserChange?.(updated);
-    setStatus('Emergency contact saved.');
+    if (!contact.emergencyContactPhone.trim() && !contact.emergencyContactEmail.trim()) { setStatus('Add a phone number or an email for your contact.'); return; }
+    try {
+      const { user: updated } = await api.updateMe(contact);
+      onUserChange?.(updated);
+      setStatus('Emergency contact saved.');
+    } catch (err) { setStatus(err.message); }
   }
 
   return (
@@ -83,27 +101,36 @@ export default function SafetyPanel({ trip, user, onUserChange }) {
         </button>
       ) : phase === 'countdown' ? (
         <div className="countdown">
-          <p>Sending your location to your emergency contact and opening 911 in <strong>{secondsLeft}</strong>…</p>
+          <p>Alerting your emergency contact and opening 911 in <strong>{secondsLeft}</strong>…</p>
           <button className="danger" onClick={cancel}>Cancel, I'm OK</button>
         </div>
       ) : (
-        <p><strong>Emergency started.</strong> You must tap Call yourself; pressing this button does not contact 911 on its own.</p>
+        <div className="emergency-sent">
+          <p><strong>Emergency started.</strong> RUThere doesn't call or text anyone for you. You have to tap Call, and Send for the text.</p>
+          {textLink && <a className="button emergency-text" href={textLink}>Text {contactName} my location</a>}
+        </div>
       )}
 
       {!hasContact && (
         <form onSubmit={saveContact} className="contact-form">
-          <p className="muted">No emergency contact yet. Add one so the button can notify someone you trust.</p>
+          <p className="muted">No emergency contact yet. Add one so the button can reach someone you trust.</p>
           <div className="row">
             <label>Name<input required value={contact.emergencyContactName} onChange={(e) => setContact({ ...contact, emergencyContactName: e.target.value })} placeholder="Mom" /></label>
-            <label>Phone<input required value={contact.emergencyContactPhone} onChange={(e) => setContact({ ...contact, emergencyContactPhone: e.target.value })} placeholder="732-555-0100" /></label>
+            <label>Phone<input type="tel" value={contact.emergencyContactPhone} onChange={(e) => setContact({ ...contact, emergencyContactPhone: e.target.value })} placeholder="732-555-0100" /></label>
+            <label>Email (optional)<input type="email" value={contact.emergencyContactEmail} onChange={(e) => setContact({ ...contact, emergencyContactEmail: e.target.value })} placeholder="mom@example.com" /></label>
           </div>
           <button className="linkish" type="submit">Save contact</button>
         </form>
       )}
-      {hasContact && <p className="muted">Emergency contact: {user.emergencyContactName} ({user.emergencyContactPhone})</p>}
-      {status && <p className="muted">{status}</p>}
+      {hasContact && <p className="muted">Emergency contact: {[user.emergencyContactName, user.emergencyContactPhone, user.emergencyContactEmail].filter(Boolean).join(' · ')}</p>}
+      {status && <p className="muted" role="status">{status}</p>}
     </section>
   );
+}
+
+function fallbackMessage(location) {
+  const where = location ? `My location: https://maps.google.com/?q=${location.lat},${location.lng}` : 'My location was not available.';
+  return `I pressed the emergency button in RUThere and need help. ${where}`;
 }
 
 function getLocation() {

@@ -41,4 +41,9 @@ export const api = {
   safetyResources: () => call('/safety/resources'),
   safetyAlert: (body) => call('/safety/alert', { method: 'POST', body }),
   cancelTrip: (id) => call(`/trips/${id}`, { method: 'DELETE' }),
+  myStanding: () => call('/trust/me'),
+  reportReasons: () => call('/trust/report-reasons'),
+  report: (body) => call('/trust/reports', { method: 'POST', body }),
+  block: (userId) => call('/trust/blocks', { method: 'POST', body: { userId } }),
+  unblock: (userId) => call(`/trust/blocks/${userId}`, { method: 'DELETE' }),
 };
