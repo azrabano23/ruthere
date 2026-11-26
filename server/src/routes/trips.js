@@ -5,6 +5,7 @@ import { validateTrip, canCancel } from '../lib/trips.js';
 import { RESERVATION_MESSAGES } from '../lib/reservations.js';
 import { hideBlocked, isSuspended, suspendedMessage } from '../lib/trust.js';
 import { hiddenIdsFor, recordLeave } from './trust.js';
+import { publish } from '../lib/events.js';
 
 export function tripsRouter(store) {
   const r = Router();
@@ -72,6 +73,7 @@ export function tripsRouter(store) {
         return res.status(status).json({ error: RESERVATION_MESSAGES[verdict.reason], reason: verdict.reason });
       }
       const seatsLeft = (await store.trips.findById(req.params.id)).seats - (await store.reservations.countForTrip(req.params.id));
+      publish('seat_taken', { tripId: req.params.id, seatsLeft, by: req.user.displayName || 'A rider' });
       res.status(201).json({ ok: true, seatsLeft });
     } catch (e) { next(e); }
   });
@@ -86,6 +88,7 @@ export function tripsRouter(store) {
       const seatsLeft = trip.seats - (await store.reservations.countForTrip(trip.id));
       // Less than an hour before departure counts as a late cancel (use case 6).
       const standing = await recordLeave(store, req.user.id, trip.departsAt, { tripId: trip.id });
+      publish('seat_released', { tripId: trip.id, seatsLeft, by: req.user.displayName || 'A rider' });
       res.json({ ok: true, seatsLeft, ...standing });
     } catch (e) { next(e); }
   });
@@ -96,7 +99,10 @@ export function tripsRouter(store) {
       const trip = await store.trips.findById(req.params.id);
       if (!trip) return res.status(404).json({ error: 'Not found' });
       if (!canCancel(trip, req.user)) return res.status(403).json({ error: 'Only the poster can cancel this trip' });
+      // Tell every rider before the trip disappears (use case 3).
+      const riderIds = await store.reservations.listRiders(trip.id);
       await store.trips.delete(trip.id);
+      publish('trip_cancelled', { tripId: trip.id, userIds: riderIds, route: `${trip.origin.label} → ${trip.destination.label}`, departsAt: trip.departsAt });
       res.json({ ok: true });
     } catch (e) { next(e); }
   });
