@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 import TripDetail from '../pages/TripDetail.jsx';
 
 vi.mock('../lib/api.js', () => ({ api: { trip: vi.fn(), requestSeat: vi.fn(), giveUpSeat: vi.fn(), safetyResources: vi.fn().mockResolvedValue([]), updateMe: vi.fn(), reportReasons: vi.fn().mockResolvedValue({ unsafe: 'Unsafe driving or behavior' }), report: vi.fn(), block: vi.fn() } }));
+vi.mock('../lib/realtime.js', () => ({ onEvent: () => () => {}, watchTrip: () => () => {}, watchGroup: () => () => {}, connect: () => {}, describeEvent: () => null }));
 vi.mock('../components/PickupMap.jsx', () => ({ default: () => null }));
 import { api } from '../lib/api.js';
 
