@@ -25,6 +25,24 @@ If you don't have a car at Rutgers, getting around means a packed bus or a solo 
 
 Everyone owns one slice of the code. You build it on your own branch, open a pull request into `main`, one teammate reviews, merge. Your commits stay under your name, so the commit history shows who built what.
 
+### Final phase (Nov 25 to Dec 6)
+
+Exact tasks, shared deadlines and "done when" checks are in `docs/FINAL_PLAN.md`. Every piece uses free services only.
+
+| Person | Branch | Your slice |
+|---|---|---|
+| Abuchi Okpara | `abuchi` | Ride search: a "find a ride" screen that runs the matching function, and offers a shared Uber when nothing matches |
+| Joshua In | `joshua` | Shared Uber groups of up to 4: tables, join, leave, lock, meeting spot. Shares the table layout by Nov 27 |
+| Zen Castaneda | `zen` | Fare split and payments: booker enters the fare, everyone sees their share and a Venmo link, mark paid, suggested price per seat with an admin cap |
+| Azra Bano | `azra` | Live updates with Socket.IO: group and trip changes reach everyone within two seconds |
+| Aaron Chu | `aaron` | Trust and safety: late-cancel strikes and suspension, report and block, free emergency alerts (ready-to-send text plus an email to the contact) |
+| Chris Savage | `chris` | Sign in with Google (ScarletMail), demo data for the new features, a GitHub issue per user story, the pilot with real students |
+| Anthony Morales | `anthony` | Driver rules (only approved drivers post, seats capped by the car), earnings total on the driver dashboard, Cucumber acceptance tests |
+
+The final presentation and report are handled separately.
+
+### Midterm (Oct 26 to Nov 8)
+
 | Person | Branch | Your slice | Files you own |
 |---|---|---|---|
 | Zen Castaneda | `zen` | Google Maps: real address autocomplete, map of the pickup spot on each trip. Also owns the UI: one styling pass across all screens so the app looks like the proposal deck and works on a phone | `client/src/components/PlaceInput.jsx`, new `client/src/components/PickupMap.jsx`, `client/src/styles.css` |
@@ -35,7 +53,7 @@ Everyone owns one slice of the code. You build it on your own branch, open a pul
 | Anthony Morales | `anthony` | Driver application form + admin approve/reject, Cucumber acceptance tests | new `server/src/routes/drivers.js`, new `client/src/pages/DriverApply.jsx`, `server/features/` |
 | Abuchi Okpara | `abuchi` | Matching rules: the function that finds trips leaving the same spot within 15 minutes, with tests | new `server/src/lib/matching.js`, new `server/spec/matchingSpec.js`, `docs/MATCHING.md` |
 
-Each slice is about the same size: one or two screens or routes, plus a test. Exact steps and "done when" checks are in `docs/TEAM_PLAN.md`.
+Each midterm slice was about the same size: one or two screens or routes, plus a test. Exact steps are in `docs/TEAM_PLAN.md`.
 
 ### Daily workflow
 
@@ -76,23 +94,39 @@ Check the box when it is merged to `main`.
 - [x] Emergency button: hold 2s, 5s to cancel, opens 911, builds an alert with your location for your emergency contact (logged on the server until real SMS is added), RUPD resources (Azra)
 - [x] Profile page, trip filters, fake accounts and trips for the demo (Chris)
 - [x] Driver application and admin approval (Anthony)
-- [ ] Cucumber acceptance tests (Anthony)
+- [ ] Cucumber acceptance tests (moved to the final phase, Anthony)
 - [x] Matching rules spec and a tested matching function (Abuchi)
-- [ ] Every user story as a GitHub issue (Anthony)
+- [ ] Every user story as a GitHub issue (moved to the final phase, Chris)
 - [ ] Demo script and backup video (Chris)
 - [ ] Slide deck with architecture and data model diagrams (Azra assembles, everyone fills their section)
 - [ ] Register our presentation timeslot on page 6 of the course doc (Abuchi, ASAP, first come first served)
 - [ ] Add all six teammates as collaborators on this repo (Azra)
 
-**After the midterm (Nov 9 to Dec 6)**
-- [ ] Shared Uber groups of up to 4 when no driver matches
-- [ ] Fare split screen showing what each person owes
-- [ ] Live updates when a group fills or someone drops (Socket.IO)
-- [ ] Leave a group, strikes for late cancels
-- [ ] Emergency alert by real SMS (needs Twilio or similar), verify RUPD numbers with the department
-- [ ] Message your group, report or block a user
-- [ ] Test with real students and fix what breaks
+**After the midterm**
+- [x] Landing page redesign with scroll animations and a "Sign up" button (Aaron)
+
+**Final phase (Nov 25 to Dec 6, details in `docs/FINAL_PLAN.md`)**
+- [ ] Find a ride: search by pickup, destination and time using the matching function (Abuchi)
+- [ ] Shared Uber groups of up to 4 when no driver matches (Joshua)
+- [ ] Fare split: each person's share, Venmo link, mark paid (Zen)
+- [ ] Suggested price per seat and an admin price cap (Zen)
+- [ ] Live updates when a group fills, someone drops or a trip is cancelled (Azra)
+- [ ] Strikes for late cancels, one-week suspension after three (Aaron)
+- [ ] Report and block a user (Aaron)
+- [ ] Emergency alert to the contact for free: ready-to-send text from the rider's phone plus an email (Aaron)
+- [ ] Sign in with Google using ScarletMail (Chris)
+- [ ] Only approved drivers can post, seats capped by the car (Anthony)
+- [ ] Driver earnings total (Anthony)
+- [ ] Cucumber acceptance tests in CI (Anthony)
+- [ ] Every user story as a GitHub issue (Chris)
+- [ ] Pilot with about 50 real students, fix what breaks (Chris collects, each owner fixes)
 - [ ] Final demo: one full pooled ride, live
+
+**Later, not in this phase**
+- [ ] Message your group
+- [ ] Rate the people you rode with
+- [ ] Automatic texts to the emergency contact (needs a paid SMS service)
+- [ ] Verify RUPD numbers with the department
 
 ## What's here (midterm scope, Oct 26 to Nov 8)
 
@@ -140,7 +174,7 @@ Each is one variable in `.env`. See `.env.example`.
 ```
 server/   Express API. src/app.js (routes wired up), src/routes (auth, trips, safety, pickup-spots), src/lib (pure logic, tested), src/db (schema.sql + store), spec/ (tests)
 client/   React + Vite. src/pages (SignIn, PostTrip, Trips), src/components/PlaceInput.jsx
-docs/     TEAM_PLAN.md (who does what through the midterm), design notes
+docs/     FINAL_PLAN.md (who does what Nov 25 to Dec 6), TEAM_PLAN.md (who did what through the midterm), design notes
 ```
 
 ## API
