@@ -1,4 +1,4 @@
-import { buildAlertMessage, SAFETY_RESOURCES, HOLD_MS, CANCEL_WINDOW_MS } from '../src/lib/safety.js';
+import { buildAlertMessage, deliverAlert, isEmailish, SAFETY_RESOURCES, HOLD_MS, CANCEL_WINDOW_MS } from '../src/lib/safety.js';
 
 describe('emergency alert message', () => {
   const user = { displayName: 'Azra B.', email: 'ab@scarletmail.rutgers.edu' };
@@ -25,5 +25,29 @@ describe('safety constants', () => {
   it('requires a 2 second hold and gives 5 seconds to cancel', () => {
     expect(HOLD_MS).toBe(2000);
     expect(CANCEL_WINDOW_MS).toBe(5000);
+  });
+});
+
+describe('delivering the alert', () => {
+  const message = 'Help';
+  it('emails the contact when they have an email address', async () => {
+    const sent = [];
+    const r = await deliverAlert({ contact: { name: 'Mom', phone: '7325550100', email: 'mom@example.com' }, riderName: 'Azra', message }, { send: async (to, body) => { sent.push({ to, ...body }); return true; } });
+    expect(r).toEqual({ emailed: true });
+    expect(sent).toEqual([{ to: 'mom@example.com', riderName: 'Azra', message }]);
+  });
+  it('skips the email when the contact only has a phone (the rider texts from their phone)', async () => {
+    const send = jasmine.createSpy('send');
+    expect(await deliverAlert({ contact: { name: 'Mom', phone: '7325550100' }, riderName: 'Azra', message }, { send })).toEqual({ emailed: false });
+    expect(send).not.toHaveBeenCalled();
+  });
+  it('never throws when the email fails, so the rider can still call and text', async () => {
+    const r = await deliverAlert({ contact: { email: 'mom@example.com' }, riderName: 'Azra', message }, { send: async () => { throw new Error('Brevo down'); } });
+    expect(r).toEqual({ emailed: false, emailError: true });
+  });
+  it('accepts a blank or real-looking contact email only', () => {
+    expect(isEmailish('')).toBeTrue();
+    expect(isEmailish('mom@example.com')).toBeTrue();
+    expect(isEmailish('mom at example')).toBeFalse();
   });
 });

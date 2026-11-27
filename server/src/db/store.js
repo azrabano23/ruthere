@@ -11,8 +11,38 @@ export async function createStore() {
 function memoryStore() {
   const users = new Map(), codes = new Map(), trips = new Map(), reservations = new Map(); // tripId -> Set(riderId)
   const driverApps = new Map();
+  const strikes = [], reports = new Map(), blocks = new Set(); // blocks holds "blockerId:blockedId"
   return {
     kind: 'memory',
+    strikes: {
+      async add(userId, { tripId = null, reason = 'late_cancel' } = {}) { const s = { id: crypto.randomUUID(), userId, tripId, reason, createdAt: new Date().toISOString() }; strikes.push(s); return { ...s }; },
+      async listSince(userId, sinceIso) { return strikes.filter((s) => s.userId === userId && s.createdAt >= sinceIso).map((s) => ({ ...s })); },
+    },
+    reports: {
+      async create(reporterId, { reportedId, tripId = null, reason, details = '' }) {
+        const r = { id: crypto.randomUUID(), reporterId, reportedId, tripId, reason, details, status: 'open', reviewedBy: null, reviewedAt: null, createdAt: new Date().toISOString() };
+        reports.set(r.id, r); return { ...r };
+      },
+      async listByStatus(status) { return [...reports.values()].filter((r) => r.status === status).sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map((r) => ({ ...r })); },
+      // Returns the updated report, or null if it doesn't exist or was already reviewed.
+      async review(id, { status, reviewerId }) {
+        const r = reports.get(id);
+        if (!r || r.status !== 'open') return null;
+        Object.assign(r, { status, reviewedBy: reviewerId, reviewedAt: new Date().toISOString() });
+        return { ...r };
+      },
+    },
+    blocks: {
+      async add(blockerId, blockedId) { blocks.add(`${blockerId}:${blockedId}`); },
+      async remove(blockerId, blockedId) { return blocks.delete(`${blockerId}:${blockedId}`); },
+      async listBlockedBy(blockerId) { return [...blocks].filter((k) => k.startsWith(`${blockerId}:`)).map((k) => k.split(':')[1]); },
+      // Everyone hidden from this user: people they blocked and people who blocked them.
+      async hiddenFor(userId) {
+        const out = new Set();
+        for (const k of blocks) { const [a, b] = k.split(':'); if (a === userId) out.add(b); if (b === userId) out.add(a); }
+        return out;
+      },
+    },
     async ping() { return true; },
     driverApplications: {
       async create(userId, { carMakeModel, carColor, licensePlate, seatsAvailable }) {
@@ -45,12 +75,14 @@ function memoryStore() {
       async release(tripId, riderId) { return reservations.get(tripId)?.delete(riderId) ?? false; },
       async countForTrip(tripId) { return reservations.get(tripId)?.size ?? 0; },
       async has(tripId, riderId) { return reservations.get(tripId)?.has(riderId) ?? false; },
+      async listRiders(tripId) { return [...(reservations.get(tripId) ?? [])]; },
     },
     users: {
       async findById(id) { return users.get(id) ?? null; },
       async findByEmail(email) { return [...users.values()].find((u) => u.email === email) ?? null; },
-      async create({ email }) { const u = { id: crypto.randomUUID(), email, displayName: null, paymentHandle: null, isDriverApproved: false, emergencyContactName: null, emergencyContactPhone: null, createdAt: new Date().toISOString() }; users.set(u.id, u); return u; },
-      async update(id, patch) { const u = { ...users.get(id) }; for (const k of ['displayName', 'paymentHandle', 'emergencyContactName', 'emergencyContactPhone']) if (patch[k] !== undefined) u[k] = patch[k]; users.set(id, u); return u; },
+      async create({ email }) { const u = { id: crypto.randomUUID(), email, displayName: null, paymentHandle: null, isDriverApproved: false, emergencyContactName: null, emergencyContactPhone: null, emergencyContactEmail: null, suspendedUntil: null, createdAt: new Date().toISOString() }; users.set(u.id, u); return u; },
+      async update(id, patch) { const u = { ...users.get(id) }; for (const k of ['displayName', 'paymentHandle', 'emergencyContactName', 'emergencyContactPhone', 'emergencyContactEmail']) if (patch[k] !== undefined) u[k] = patch[k]; users.set(id, u); return u; },
+      async setSuspendedUntil(id, until) { const u = users.get(id); if (!u) return null; users.set(id, { ...u, suspendedUntil: until }); return users.get(id); },
     },
     codes: {
       async upsert(email, rec) { codes.set(email, { ...rec }); },
@@ -82,7 +114,10 @@ async function pgStore(connectionString) {
       if (/ENETUNREACH|EHOSTUNREACH|ETIMEDOUT|timeout/i.test(detail)) console.error('[db] hint: on Supabase use the "Session pooler" connection string (IPv4), not the direct one; Render has no IPv6.');
     },
   );
-  const userRow = (r) => r && { id: r.id, email: r.email, displayName: r.display_name, paymentHandle: r.payment_handle, isDriverApproved: r.is_driver_approved, emergencyContactName: r.emergency_contact_name, emergencyContactPhone: r.emergency_contact_phone, createdAt: r.created_at };
+  const userRow = (r) => r && { id: r.id, email: r.email, displayName: r.display_name, paymentHandle: r.payment_handle, isDriverApproved: r.is_driver_approved, emergencyContactName: r.emergency_contact_name, emergencyContactPhone: r.emergency_contact_phone, emergencyContactEmail: r.emergency_contact_email ?? null, suspendedUntil: r.suspended_until ? new Date(r.suspended_until).toISOString() : null, createdAt: r.created_at };
+  const iso = (d) => (d ? new Date(d).toISOString() : null);
+  const strikeRow = (r) => r && { id: r.id, userId: r.user_id, tripId: r.trip_id, reason: r.reason, createdAt: iso(r.created_at) };
+  const reportRow = (r) => r && { id: r.id, reporterId: r.reporter_id, reportedId: r.reported_id, tripId: r.trip_id, reason: r.reason, details: r.details, status: r.status, reviewedBy: r.reviewed_by, reviewedAt: iso(r.reviewed_at), createdAt: iso(r.created_at) };
   const appRow = (r) => r && { id: r.id, userId: r.user_id, carMakeModel: r.car_make_model, carColor: r.car_color, licensePlate: r.license_plate, seatsAvailable: r.seats_available, status: r.status, reviewedBy: r.reviewed_by, reviewedAt: r.reviewed_at, reviewNote: r.review_note, createdAt: r.created_at };
   const tripRow = (r) => r && ({
     id: r.id, posterId: r.poster_id,
@@ -93,6 +128,31 @@ async function pgStore(connectionString) {
   return {
     kind: 'postgres',
     async ping() { await pool.query('select 1'); return true; },
+    strikes: {
+      async add(userId, { tripId = null, reason = 'late_cancel' } = {}) {
+        return strikeRow((await pool.query('insert into strikes(user_id,trip_id,reason) values($1,$2,$3) returning *', [userId, tripId, reason])).rows[0]);
+      },
+      async listSince(userId, sinceIso) { return (await pool.query('select * from strikes where user_id=$1 and created_at >= $2 order by created_at', [userId, sinceIso])).rows.map(strikeRow); },
+    },
+    reports: {
+      async create(reporterId, { reportedId, tripId = null, reason, details = '' }) {
+        return reportRow((await pool.query('insert into reports(reporter_id,reported_id,trip_id,reason,details) values($1,$2,$3,$4,$5) returning *', [reporterId, reportedId, tripId, reason, details])).rows[0]);
+      },
+      async listByStatus(status) { return (await pool.query('select * from reports where status=$1 order by created_at', [status])).rows.map(reportRow); },
+      // "status = 'open'" means two admins clicking at once can't both review it.
+      async review(id, { status, reviewerId }) {
+        return reportRow((await pool.query("update reports set status=$2, reviewed_by=$3, reviewed_at=now() where id=$1 and status='open' returning *", [id, status, reviewerId])).rows[0]) ?? null;
+      },
+    },
+    blocks: {
+      async add(blockerId, blockedId) { await pool.query('insert into blocks(blocker_id,blocked_id) values($1,$2) on conflict do nothing', [blockerId, blockedId]); },
+      async remove(blockerId, blockedId) { return (await pool.query('delete from blocks where blocker_id=$1 and blocked_id=$2', [blockerId, blockedId])).rowCount > 0; },
+      async listBlockedBy(blockerId) { return (await pool.query('select blocked_id from blocks where blocker_id=$1 order by created_at', [blockerId])).rows.map((r) => r.blocked_id); },
+      async hiddenFor(userId) {
+        const rows = (await pool.query('select blocked_id as id from blocks where blocker_id=$1 union select blocker_id from blocks where blocked_id=$1', [userId])).rows;
+        return new Set(rows.map((r) => r.id));
+      },
+    },
     driverApplications: {
       async create(userId, { carMakeModel, carColor, licensePlate, seatsAvailable }) {
         try {
@@ -149,16 +209,18 @@ async function pgStore(connectionString) {
       async release(tripId, riderId) { return (await pool.query('delete from seat_reservations where trip_id=$1 and rider_id=$2', [tripId, riderId])).rowCount > 0; },
       async countForTrip(tripId) { return Number((await pool.query('select count(*)::int as n from seat_reservations where trip_id=$1', [tripId])).rows[0].n); },
       async has(tripId, riderId) { return (await pool.query('select 1 from seat_reservations where trip_id=$1 and rider_id=$2', [tripId, riderId])).rowCount > 0; },
+      async listRiders(tripId) { return (await pool.query('select rider_id from seat_reservations where trip_id=$1 order by created_at', [tripId])).rows.map((r) => r.rider_id); },
     },
     users: {
       async findById(id) { return userRow((await pool.query('select * from users where id=$1', [id])).rows[0]); },
       async findByEmail(email) { return userRow((await pool.query('select * from users where email=$1', [email])).rows[0]); },
       async create({ email }) { return userRow((await pool.query('insert into users(email) values($1) returning *', [email])).rows[0]); },
-      async update(id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone }) {
+      async update(id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone, emergencyContactEmail }) {
         return userRow((await pool.query(
-          'update users set display_name=coalesce($2,display_name), payment_handle=coalesce($3,payment_handle), emergency_contact_name=coalesce($4,emergency_contact_name), emergency_contact_phone=coalesce($5,emergency_contact_phone) where id=$1 returning *',
-          [id, displayName ?? null, paymentHandle ?? null, emergencyContactName ?? null, emergencyContactPhone ?? null])).rows[0]);
+          'update users set display_name=coalesce($2,display_name), payment_handle=coalesce($3,payment_handle), emergency_contact_name=coalesce($4,emergency_contact_name), emergency_contact_phone=coalesce($5,emergency_contact_phone), emergency_contact_email=coalesce($6,emergency_contact_email) where id=$1 returning *',
+          [id, displayName ?? null, paymentHandle ?? null, emergencyContactName ?? null, emergencyContactPhone ?? null, emergencyContactEmail ?? null])).rows[0]);
       },
+      async setSuspendedUntil(id, until) { return userRow((await pool.query('update users set suspended_until=$2 where id=$1 returning *', [id, until])).rows[0]); },
     },
     codes: {
       async upsert(email, { codeHash, expiresAt, attempts }) {

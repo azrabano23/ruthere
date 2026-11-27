@@ -7,6 +7,7 @@ import { tripsRouter } from './routes/trips.js';
 import { pickupSpotsRouter } from './routes/pickupSpots.js';
 import { safetyRouter } from './routes/safety.js';
 import { driversRouter } from './routes/drivers.js';
+import { trustRouter } from './routes/trust.js';
 
 /** A readable message for any error, including Node's AggregateError (empty message, details in .errors). */
 export function describeError(err) {
@@ -49,6 +50,7 @@ export function createApp(store) {
   app.use('/pickup-spots', pickupSpotsRouter());
   app.use('/safety', safetyRouter(store));
   app.use('/drivers', driversRouter(store));
+  app.use('/trust', trustRouter(store));
 
   app.use((err, _req, res, _next) => {
     console.error(err);

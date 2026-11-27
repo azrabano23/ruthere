@@ -4,7 +4,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { vi } from 'vitest';
 import TripDetail from '../pages/TripDetail.jsx';
 
-vi.mock('../lib/api.js', () => ({ api: { trip: vi.fn(), requestSeat: vi.fn(), giveUpSeat: vi.fn(), safetyResources: vi.fn().mockResolvedValue([]), updateMe: vi.fn() } }));
+vi.mock('../lib/api.js', () => ({ api: { trip: vi.fn(), requestSeat: vi.fn(), giveUpSeat: vi.fn(), safetyResources: vi.fn().mockResolvedValue([]), updateMe: vi.fn(), reportReasons: vi.fn().mockResolvedValue({ unsafe: 'Unsafe driving or behavior' }), report: vi.fn(), block: vi.fn() } }));
 vi.mock('../components/PickupMap.jsx', () => ({ default: () => null }));
 import { api } from '../lib/api.js';
 
@@ -44,5 +44,25 @@ describe('trip detail page', () => {
     renderDetail({ id: 'driver', email: 'd@rutgers.edu' });
     expect(await screen.findByText(/manage in my trips/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /request a seat/i })).not.toBeInTheDocument();
+  });
+
+  it('lets a rider block the driver they are riding with', async () => {
+    api.trip.mockResolvedValue({ ...trip, joined: true, people: [{ id: 'driver', displayName: 'Zen', role: 'driver' }] });
+    api.block.mockResolvedValue({ ok: true });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderDetail();
+    expect(await screen.findByText(/people on this trip/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^block$/i }));
+    expect(api.block).toHaveBeenCalledWith('driver');
+    expect(await screen.findByText(/you blocked zen/i)).toBeInTheDocument();
+  });
+
+  it('warns a rider who gives up a seat late that they got a strike', async () => {
+    api.trip.mockResolvedValue({ ...trip, joined: true, people: [] });
+    api.giveUpSeat.mockResolvedValue({ ok: true, seatsLeft: 1, strike: true, strikes: 2, suspendedUntil: null });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderDetail();
+    await userEvent.click(await screen.findByRole('button', { name: /give up my seat/i }));
+    expect(await screen.findByText(/you got a strike \(2 of 3/i)).toBeInTheDocument();
   });
 });

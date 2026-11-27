@@ -79,7 +79,7 @@ Check the box when it is merged to `main`.
 - [x] Pick a campus spot as the address (works without a Google key)
 - [x] Database tables designed
 - [x] Tests run automatically on every pull request
-- [x] 84 tests (75 server, 9 client): server rules, API end-to-end, and client pages
+- [x] 114 tests (100 server, 14 client): server rules, API end-to-end, and client pages
 
 **Before the midterm (Nov 4 freeze)**
 - [x] Real address search with Google Maps, and a map of the pickup spot (Zen)
@@ -111,9 +111,9 @@ Check the box when it is merged to `main`.
 - [ ] Fare split: each person's share, Venmo link, mark paid (Zen)
 - [ ] Suggested price per seat and an admin price cap (Zen)
 - [ ] Live updates when a group fills, someone drops or a trip is cancelled (Azra)
-- [ ] Strikes for late cancels, one-week suspension after three (Aaron)
-- [ ] Report and block a user (Aaron)
-- [ ] Emergency alert to the contact for free: ready-to-send text from the rider's phone plus an email (Aaron)
+- [x] Strikes for late cancels, one-week suspension after three (Aaron)
+- [x] Report and block a user, admin report queue (Aaron)
+- [x] Emergency alert to the contact for free: ready-to-send text from the rider's phone plus an email (Aaron)
 - [ ] Sign in with Google using ScarletMail (Chris)
 - [ ] Only approved drivers can post, seats capped by the car (Anthony)
 - [ ] Driver earnings total (Anthony)
@@ -157,7 +157,7 @@ Run the tests:
 npm test
 ```
 
-Server: 75 Jasmine specs covering pure rules, the last-seat race, driver approval, matching, and end-to-end API tests that start the real server on a random port (`server/spec/`). Client: 9 Vitest + Testing Library specs for the sign-in, trips and trip detail pages (`client/src/test/`). CI runs both on every pull request.
+Server: 100 Jasmine specs covering pure rules, the last-seat race, driver approval, matching, strikes, blocking and reports, the emergency alert email, and end-to-end API tests that start the real server on a random port (`server/spec/`). Client: 14 Vitest + Testing Library specs for the sign-in, trips and trip detail pages and the text-message link (`client/src/test/`). CI runs both on every pull request.
 
 ## Turning on the real services
 
@@ -195,7 +195,15 @@ docs/     FINAL_PLAN.md (who does what Nov 25 to Dec 6), TEAM_PLAN.md (who did w
 | DELETE | `/trips/:id/request` | | Give up my seat |
 | DELETE | `/trips/:id` | | Poster only |
 | GET | `/safety/resources` | | 911, RUPD, Rutgers public safety |
-| POST | `/safety/alert` | `{ tripId?, location? }` | Sends trip + location to the user's emergency contact |
+| POST | `/safety/alert` | `{ tripId?, location? }` | Emails the emergency contact (if they have an email) and returns `message` + `smsTo` so the phone can open a ready-to-send text |
+| GET | `/trust/me` | | My late-cancel strikes, any suspension, and who I blocked |
+| GET | `/trust/report-reasons` | | Reasons a user can be reported for |
+| POST | `/trust/reports` | `{ userId, reason, details?, tripId? }` | Report someone. An admin reviews it |
+| POST | `/trust/blocks` | `{ userId }` | Block someone: you stop seeing each other's trips and can't join them |
+| DELETE | `/trust/blocks/:userId` | | Unblock |
+| GET | `/trust/reports` | | Admin only: open reports |
+| POST | `/trust/reports/:id/dismiss` | | Admin only |
+| POST | `/trust/reports/:id/suspend` | | Admin only: pauses the reported user's ride requests for a week |
 
 ## How we work
 

@@ -430,3 +430,17 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
   top: -35px;
 }
 
+
+/* Trust and safety: the text-your-contact button, people on a trip, report form, profile standing card */
+.emergency-sent .emergency-text { display: block; width: 100%; margin-top: 10px; padding: 16px; font-size: 1.05rem; }
+.report-block { margin-top: 20px; }
+.report-block h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.people { list-style: none; margin: 0; padding: 0; }
+.people > li { border-top: 1px solid var(--line); padding: 8px 0; }
+.people > li:first-child { border-top: 0; }
+.person-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.person-actions { display: flex; gap: 14px; }
+.report-form { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.report-form textarea { font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: inherit; }
+.account-safety { margin-top: 20px; text-align: left; }
+.account-safety h2 { margin-bottom: 12px; }

@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { allowedDomains, isRutgersEmail, generateCode, hashCode, checkCode, signSession, requireUser, resendWaitSeconds, CODE_TTL_MS } from '../lib/auth.js';
 import { sendCode } from '../lib/email.js';
+import { isEmailish } from '../lib/safety.js';
 
 export function authRouter(store) {
   const r = Router();
@@ -48,7 +49,9 @@ export function authRouter(store) {
   r.patch('/me', requireUser(store), async (req, res, next) => {
     try {
       const { displayName, paymentHandle, emergencyContactName, emergencyContactPhone } = req.body ?? {};
-      const user = await store.users.update(req.user.id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone });
+      const emergencyContactEmail = req.body?.emergencyContactEmail === undefined ? undefined : String(req.body.emergencyContactEmail).trim().toLowerCase();
+      if (!isEmailish(emergencyContactEmail)) return res.status(400).json({ error: "That emergency contact email doesn't look right" });
+      const user = await store.users.update(req.user.id, { displayName, paymentHandle, emergencyContactName, emergencyContactPhone, emergencyContactEmail });
       res.json({ user });
     } catch (e) { next(e); }
   });

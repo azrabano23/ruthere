@@ -1,4 +1,4 @@
-import { sendCode, parseSender } from '../src/lib/email.js';
+import { sendCode, sendAlertEmail, parseSender } from '../src/lib/email.js';
 
 // Stand-in for fetch: records each request to Brevo and answers with the status and body we give it.
 const fakeBrevo = (status, body) => {
@@ -40,4 +40,23 @@ describe('sending the sign-in code', () => {
 describe('reading the sender address', () => {
   it('splits a name and address', () => expect(parseSender('RUThere <me@gmail.com>')).toEqual({ name: 'RUThere', email: 'me@gmail.com' }));
   it('accepts a bare address', () => expect(parseSender('me@gmail.com')).toEqual({ name: 'RUThere', email: 'me@gmail.com' }));
+});
+
+describe('emailing an emergency alert', () => {
+  beforeEach(() => { process.env.BREVO_API_KEY = 'test-key'; process.env.EMAIL_FROM = 'RUThere <me@gmail.com>'; });
+  afterEach(() => { delete process.env.BREVO_API_KEY; delete process.env.EMAIL_FROM; });
+
+  it('sends the alert text to the contact with the rider named in the subject', async () => {
+    const brevo = fakeBrevo(201, {});
+    expect(await sendAlertEmail('mom@example.com', { riderName: 'Azra B.', message: 'Live location: https://maps.google.com/?q=1,2' }, { fetch: brevo.fetch })).toBeTrue();
+    expect(brevo.calls[0].body.to).toEqual([{ email: 'mom@example.com' }]);
+    expect(brevo.calls[0].body.subject).toBe('Emergency alert from Azra B. on RUThere');
+    expect(brevo.calls[0].body.textContent).toContain('maps.google.com');
+  });
+  it('sends nothing without an API key', async () => {
+    delete process.env.BREVO_API_KEY;
+    const brevo = fakeBrevo(201, {});
+    expect(await sendAlertEmail('mom@example.com', { riderName: 'A', message: 'm' }, { fetch: brevo.fetch })).toBeFalse();
+    expect(brevo.calls.length).toBe(0);
+  });
 });

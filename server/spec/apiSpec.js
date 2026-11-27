@@ -179,3 +179,104 @@ describe('API: health and error messages', () => {
     expect(describeError({})).toBe('Server error');
   });
 });
+
+describe('API: trust and safety', () => {
+  let ctx, rider, driver, other, admin;
+  const soon = (min) => new Date(Date.now() + min * 60_000).toISOString();
+  const post = (http, min) => http('POST', '/trips', { origin: casc, destination: bsc, departsAt: soon(min), seats: 3 });
+
+  beforeAll(async () => {
+    process.env.ADMIN_EMAILS = 'boss@rutgers.edu';
+    ctx = await startServer();
+    [rider, driver, other, admin] = [client(ctx.base), client(ctx.base), client(ctx.base), client(ctx.base)];
+    await signIn(ctx.store, rider, 'rider@rutgers.edu');
+    await signIn(ctx.store, driver, 'driver@rutgers.edu');
+    await signIn(ctx.store, other, 'other@rutgers.edu');
+    await signIn(ctx.store, admin, 'boss@rutgers.edu');
+    await driver('PATCH', '/auth/me', { displayName: 'Dee' });
+  });
+  afterAll(() => { ctx.server.close(); delete process.env.ADMIN_EMAILS; });
+
+  it('gives no strike for leaving well ahead of departure', async () => {
+    const trip = (await post(driver, 180)).body;
+    await rider('POST', `/trips/${trip.id}/request`);
+    const r = await rider('DELETE', `/trips/${trip.id}/request`);
+    expect(r.status).toBe(200);
+    expect(r.body.strike).toBeFalse();
+  });
+
+  it('shows the people on a trip only to people on it', async () => {
+    const trip = (await post(driver, 180)).body;
+    await rider('POST', `/trips/${trip.id}/request`);
+    const mine = await rider('GET', `/trips/${trip.id}`);
+    expect(mine.body.people).toEqual([jasmine.objectContaining({ displayName: 'Dee', role: 'driver' })]);
+    expect((await other('GET', `/trips/${trip.id}`)).body.people).toEqual([]);
+    await rider('DELETE', `/trips/${trip.id}/request`);
+  });
+
+  it('strikes three late cancels, then pauses ride requests for a week', async () => {
+    let last;
+    for (let i = 1; i <= 3; i++) {
+      const trip = (await post(driver, 30)).body;
+      expect((await rider('POST', `/trips/${trip.id}/request`)).status).toBe(201);
+      last = await rider('DELETE', `/trips/${trip.id}/request`);
+      expect(last.body.strike).toBeTrue();
+      expect(last.body.strikes).toBe(i);
+    }
+    expect(Date.parse(last.body.suspendedUntil) - Date.now()).toBeGreaterThan(6.9 * 24 * 3600_000);
+    const next = (await post(driver, 120)).body;
+    const refused = await rider('POST', `/trips/${next.id}/request`);
+    expect(refused.status).toBe(403);
+    expect(refused.body.reason).toBe('suspended');
+    const standing = await rider('GET', '/trust/me');
+    expect(standing.body.strikes).toBe(3);
+    expect(standing.body.suspendedUntil).toBeTruthy();
+  });
+
+  it('hides blocked people from each other and stops them joining', async () => {
+    const driverId = (await driver('GET', '/auth/me')).body.user.id;
+    const otherId = (await other('GET', '/auth/me')).body.user.id;
+    const trip = (await post(driver, 180)).body;
+    expect((await other('POST', '/trust/blocks', { userId: driverId })).status).toBe(201);
+    expect((await other('GET', '/trips')).body.some((t) => t.id === trip.id)).toBeFalse();
+    expect((await other('GET', `/trips/${trip.id}`)).status).toBe(404);
+    const join = await other('POST', `/trips/${trip.id}/request`);
+    expect(join.status).toBe(409);
+    expect(join.body.reason).toBe('blocked');
+    // Works both ways: the driver no longer sees trips from the person who blocked them.
+    const otherTrip = (await post(other, 180)).body;
+    expect((await driver('GET', '/trips')).body.some((t) => t.id === otherTrip.id)).toBeFalse();
+    expect((await other('GET', '/trust/me')).body.blocked).toEqual([{ id: driverId, displayName: 'Dee' }]);
+    expect((await other('DELETE', `/trust/blocks/${driverId}`)).status).toBe(200);
+    expect((await other('GET', '/trips')).body.some((t) => t.id === trip.id)).toBeTrue();
+    expect((await other('POST', '/trust/blocks', { userId: otherId })).status).toBe(400);
+  });
+
+  it('takes a report and lets only an admin act on it', async () => {
+    const driverId = (await driver('GET', '/auth/me')).body.user.id;
+    expect((await other('POST', '/trust/reports', { userId: driverId, reason: 'made-up' })).status).toBe(400);
+    const made = await other('POST', '/trust/reports', { userId: driverId, reason: 'unsafe', details: 'Ran a red light' });
+    expect(made.status).toBe(201);
+    expect((await other('GET', '/trust/reports')).status).toBe(403);
+    const queue = await admin('GET', '/trust/reports');
+    expect(queue.body.reports.length).toBe(1);
+    expect(queue.body.reports[0].reported.email).toBe('driver@rutgers.edu');
+    const done = await admin('POST', `/trust/reports/${made.body.id}/suspend`);
+    expect(done.status).toBe(200);
+    expect((await driver('GET', '/auth/me')).body.user.suspendedUntil).toBeTruthy();
+    expect((await admin('POST', `/trust/reports/${made.body.id}/dismiss`)).status).toBe(409);
+  });
+
+  it('returns a ready-to-send text and accepts a contact with only an email', async () => {
+    expect((await other('PATCH', '/auth/me', { emergencyContactEmail: 'not an email' })).status).toBe(400);
+    await other('PATCH', '/auth/me', { emergencyContactName: 'Mom', emergencyContactEmail: 'mom@example.com' });
+    const emailOnly = await other('POST', '/safety/alert', { location: { lat: 40.5, lng: -74.45 } });
+    expect(emailOnly.status).toBe(200);
+    expect(emailOnly.body.smsTo).toBeNull();
+    expect(emailOnly.body.emailed).toBeFalse(); // no Brevo key in tests, so nothing is sent
+    await other('PATCH', '/auth/me', { emergencyContactPhone: '732-555-0100' });
+    const both = await other('POST', '/safety/alert', { location: { lat: 40.5, lng: -74.45 } });
+    expect(both.body.smsTo).toBe('732-555-0100');
+    expect(both.body.message).toContain('https://maps.google.com/?q=40.5,-74.45');
+  });
+});
