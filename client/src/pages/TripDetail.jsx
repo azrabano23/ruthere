@@ -4,6 +4,7 @@ import { api } from '../lib/api.js';
 import SafetyPanel from '../components/SafetyPanel.jsx';
 import PickupMap from '../components/PickupMap.jsx';
 import ReportBlock from '../components/ReportBlock.jsx';
+import { onEvent, watchTrip, describeEvent } from '../lib/realtime.js';
 
 /** What to tell someone who just gave up a seat, including a late-cancel strike if they got one. */
 function strikeNote({ strike, strikes, suspendedUntil }) {
@@ -46,6 +47,21 @@ export default function TripDetail({ user, onUserChange }) {
 
   useEffect(() => { api.trip(id).then(setTrip).catch(() => setTrip(null)); }, [id]);
 
+  // Live updates: reload when a seat changes hands, the driver cancels, or the socket comes back after a sleep.
+  const [live, setLive] = useState('');
+  useEffect(() => {
+    const stopWatching = watchTrip(id);
+    const stopListening = onEvent((e) => {
+      if (e.channel === 'trip' && e.tripId !== id) return;
+      if (e.channel === 'trip' || e.channel === 'reconnected') {
+        api.trip(id).then((fresh) => setTrip((t) => (t ? { ...t, ...fresh } : fresh))).catch(() => {});
+        const text = e.channel === 'trip' ? describeEvent(e) : null;
+        if (text) setLive(text);
+      }
+    });
+    return () => { stopWatching(); stopListening(); };
+  }, [id]);
+
   if (trip === undefined) return <p>Loading…</p>;
   if (trip === null) return <section className="card"><p>Trip not found.</p><Link to="/trips">Back to trips</Link></section>;
 
@@ -70,6 +86,7 @@ export default function TripDetail({ user, onUserChange }) {
       </>)}
       {mine && <Link className="button" to="/my-trips">Manage in My trips</Link>}
       {msg && <p className="muted">{msg}</p>}
+      {live && <p className="live" role="status">{live}</p>}
       {(mine || trip.joined) && <SafetyPanel trip={trip} user={user} onUserChange={onUserChange} />}
       {(mine || trip.joined) && (
         <ReportBlock people={trip.people} tripId={trip.id} onBlocked={(p) => setTrip({ ...trip, people: trip.people.filter((x) => x.id !== p.id) })} />

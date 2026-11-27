@@ -444,3 +444,8 @@ footer { margin-top:auto;padding-top:28px;font-size:11px;letter-spacing:.2px;bor
 .report-form textarea { font: inherit; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: inherit; }
 .account-safety { margin-top: 20px; text-align: left; }
 .account-safety h2 { margin-bottom: 12px; }
+
+/* live update toasts */
+.toasts { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 50; max-width: 360px; }
+.toast { background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.25); font-weight: 600; }
+.live { color: var(--red); font-weight: 600; }

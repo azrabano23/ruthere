@@ -110,7 +110,7 @@ Check the box when it is merged to `main`.
 - [ ] Shared Uber groups of up to 4 when no driver matches (Joshua)
 - [ ] Fare split: each person's share, Venmo link, mark paid (Zen)
 - [ ] Suggested price per seat and an admin price cap (Zen)
-- [ ] Live updates when a group fills, someone drops or a trip is cancelled (Azra)
+- [x] Live updates when a seat changes hands or a trip is cancelled, with the group events ready for Joshua's slice (Azra)
 - [x] Strikes for late cancels, one-week suspension after three (Aaron)
 - [x] Report and block a user, admin report queue (Aaron)
 - [x] Emergency alert to the contact for free: ready-to-send text from the rider's phone plus an email (Aaron)
@@ -189,6 +189,7 @@ docs/     FINAL_PLAN.md (who does what Nov 25 to Dec 6), TEAM_PLAN.md (who did w
 | GET | `/pickup-spots` | | Campus spots used by the stubbed address search |
 | GET | `/trips` | | Upcoming trips |
 | POST | `/trips` | `{ origin, destination, departsAt, seats, pricePerSeatCents?, notes? }` | `origin`/`destination` are `{ label, lat, lng }` |
+| GET | `/auth/socket-token` | | Short-lived token for the live-update socket |
 | GET | `/trips/mine` | | Trips I posted |
 | GET | `/trips/:id` | | Includes `seatsLeft` and `joined` |
 | POST | `/trips/:id/request` | | Reserve a seat. 409 when full, already joined, or your own trip |
@@ -204,6 +205,12 @@ docs/     FINAL_PLAN.md (who does what Nov 25 to Dec 6), TEAM_PLAN.md (who did w
 | GET | `/trust/reports` | | Admin only: open reports |
 | POST | `/trust/reports/:id/dismiss` | | Admin only |
 | POST | `/trust/reports/:id/suspend` | | Admin only: pauses the reported user's ride requests for a week |
+
+## Live updates
+
+The API runs Socket.IO next to Express (`server/src/lib/realtime.js`). The browser opens the socket straight to the API host, because the Vercel proxy cannot carry websockets, and signs in with a five-minute token from `GET /auth/socket-token`. A socket may watch a trip it is on (poster or rider) or a group it belongs to; events go only to those rooms, plus a personal room for notices like a cancelled trip.
+
+Routes publish with `publish(type, { tripId | groupId, userIds, ... })` from `server/src/lib/events.js` and never touch sockets. Events today: `seat_taken`, `seat_released`, `trip_cancelled`. Group routes publish `group_joined`, `group_left`, `group_locked`, `fare_entered`, `group_cancelled` the same way, and the client already knows how to show them (`client/src/lib/realtime.js`). If Render has been asleep, the client reconnects on its own and reloads the page data.
 
 ## How we work
 
