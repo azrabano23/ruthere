@@ -174,7 +174,7 @@ Each is one variable in `.env`. See `.env.example`.
 ```
 server/   Express API. src/app.js (routes wired up), src/routes (auth, trips, safety, pickup-spots), src/lib (pure logic, tested), src/db (schema.sql + store), spec/ (tests)
 client/   React + Vite. src/pages (SignIn, PostTrip, Trips), src/components/PlaceInput.jsx
-docs/     FINAL_PLAN.md (who does what Nov 25 to Dec 6), TEAM_PLAN.md (who did what through the midterm), design notes
+docs/     FINAL_REPORT.md, FINAL_PLAN.md (who does what Nov 25 to Dec 6), TEAM_PLAN.md (through the midterm), MATCHING.md, QA_BANK.md
 ```
 
 ## API
