@@ -99,3 +99,23 @@ create table if not exists blocks (
   check (blocker_id <> blocked_id)
 );
 create index if not exists blocks_blocked on blocks(blocked_id);
+
+-- Shared Uber Groups
+CREATE TABLE IF NOT EXISTS uber_groups (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id UUID NOT NULL REFERENCES users(id),
+  meeting_spot TEXT NOT NULL,
+  destination TEXT NOT NULL,
+  departure_time TIMESTAMPTZ NOT NULL,
+  max_capacity INT NOT NULL DEFAULT 4 CHECK (max_capacity BETWEEN 2 AND 4),
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'locked', 'cancelled')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS uber_group_members (
+  group_id UUID NOT NULL REFERENCES uber_groups(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('leader', 'member')),
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (group_id, user_id)
+);

@@ -2,6 +2,13 @@
 import crypto from 'node:crypto';
 import { decideReservation } from '../lib/reservations.js';
 
+import {
+  decideJoinGroup,
+  decideLeaveGroup,
+  decideLockGroup,
+  decideUpdateMeetingSpot,
+} from '../lib/groups.js';
+
 export async function createStore() {
   if (process.env.DATABASE_URL) return pgStore(process.env.DATABASE_URL);
   console.warn('DATABASE_URL not set: using in-memory store (data resets on restart)');
@@ -12,6 +19,7 @@ function memoryStore() {
   const users = new Map(), codes = new Map(), trips = new Map(), reservations = new Map(); // tripId -> Set(riderId)
   const driverApps = new Map();
   const strikes = [], reports = new Map(), blocks = new Set(); // blocks holds "blockerId:blockedId"
+  const uberGroups = new Map(), uberGroupMembers = new Map();
   return {
     kind: 'memory',
     strikes: {
@@ -97,6 +105,103 @@ function memoryStore() {
       async listByPoster(posterId) { return [...trips.values()].filter((t) => t.posterId === posterId).sort((a, b) => Date.parse(a.departsAt) - Date.parse(b.departsAt)); },
       async delete(id) { return trips.delete(id); },
     },
+    groups: {
+      async create({ creatorId, meetingSpot, destination, departsAt, maxCapacity = 4 }) {
+        const now = new Date().toISOString();
+        const group = {
+          id: crypto.randomUUID(),
+          creatorId,
+          meetingSpot: meetingSpot.trim(),
+          destination: destination.trim(),
+          departureTime: departsAt,
+          maxCapacity,
+          status: 'open',
+          createdAt: now,
+        };
+        uberGroups.set(group.id, group);
+        uberGroupMembers.set(group.id, [{ userId: creatorId, role: 'leader', joinedAt: now }]);
+        return this.findById(group.id);
+      },
+
+      async findById(id) {
+        const g = uberGroups.get(id);
+        if (!g) return null;
+        const rawMembers = uberGroupMembers.get(id) ?? [];
+        const members = rawMembers.map((m) => {
+          const u = users.get(m.userId);
+          return {
+            userId: m.userId,
+            email: u?.email ?? null,
+            displayName: u?.displayName ?? null,
+            role: m.role,
+            joinedAt: m.joinedAt,
+          };
+        });
+        return { ...g, members };
+      },
+
+      async listActive() {
+        const out = [];
+        for (const g of uberGroups.values()) {
+          if (g.status === 'open' || g.status === 'locked') {
+            out.push(await this.findById(g.id));
+          }
+        }
+        return out.sort((a, b) => Date.parse(a.departureTime) - Date.parse(b.departureTime));
+      },
+
+      async join(groupId, userId) {
+        const group = uberGroups.get(groupId) ?? null;
+        const members = uberGroupMembers.get(groupId) ?? [];
+        const verdict = decideJoinGroup({
+          group,
+          userId,
+          memberIds: members.map((m) => m.userId),
+        });
+        if (!verdict.ok) return verdict;
+
+        members.push({ userId, role: 'member', joinedAt: new Date().toISOString() });
+        uberGroupMembers.set(groupId, members);
+        if (verdict.willAutoLock) group.status = 'locked';
+        return { ok: true, group: await this.findById(groupId) };
+      },
+
+      async leave(groupId, userId) {
+        const group = uberGroups.get(groupId) ?? null;
+        const members = uberGroupMembers.get(groupId) ?? [];
+        const verdict = decideLeaveGroup({ group, userId, members });
+        if (!verdict.ok) return verdict;
+
+        const remaining = members.filter((m) => m.userId !== userId);
+        if (verdict.nextLeaderId) {
+          const next = remaining.find((m) => m.userId === verdict.nextLeaderId);
+          if (next) next.role = 'leader';
+        }
+        group.status = verdict.nextStatus;
+        uberGroupMembers.set(groupId, remaining);
+        return { ok: true, group: await this.findById(groupId) };
+      },
+
+      async lock(groupId, userId) {
+        const group = uberGroups.get(groupId) ?? null;
+        const members = uberGroupMembers.get(groupId) ?? [];
+        const verdict = decideLockGroup({ group, userId, members });
+        if (!verdict.ok) return verdict;
+
+        group.status = 'locked';
+        return { ok: true, group: await this.findById(groupId) };
+      },
+
+      async updateMeetingSpot(groupId, userId, meetingSpot) {
+        const group = uberGroups.get(groupId) ?? null;
+        const members = uberGroupMembers.get(groupId) ?? [];
+        const verdict = decideUpdateMeetingSpot({ group, userId, members, meetingSpot });
+        if (!verdict.ok) return verdict;
+
+        group.meetingSpot = meetingSpot.trim();
+        return { ok: true, group: await this.findById(groupId) };
+      },
+    },
   };
 }
 
@@ -124,6 +229,17 @@ async function pgStore(connectionString) {
     origin: { label: r.origin_label, lat: r.origin_lat, lng: r.origin_lng },
     destination: { label: r.dest_label, lat: r.dest_lat, lng: r.dest_lng },
     departsAt: r.departs_at, seats: r.seats, pricePerSeatCents: r.price_per_seat_cents, notes: r.notes, createdAt: r.created_at,
+  });
+  const groupRow = (r) => r && ({
+    id: r.id,
+    creatorId: r.creator_id,
+    meetingSpot: r.meeting_spot,
+    destination: r.destination,
+    departureTime: r.departure_time,
+    maxCapacity: r.max_capacity,
+    status: r.status,
+    createdAt: r.created_at,
+    members: r.members ?? [],
   });
   return {
     kind: 'postgres',
@@ -242,6 +358,207 @@ async function pgStore(connectionString) {
       async listUpcoming() { return (await pool.query('select * from trips where departs_at > now() order by departs_at asc limit 100')).rows.map(tripRow); },
       async listByPoster(posterId) { return (await pool.query('select * from trips where poster_id=$1 order by departs_at asc', [posterId])).rows.map(tripRow); },
       async delete(id) { return (await pool.query('delete from trips where id=$1', [id])).rowCount > 0; },
+    },
+    groups: {
+      async create({ creatorId, meetingSpot, destination, departsAt, maxCapacity = 4 }) {
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          const g = (await client.query(
+            `insert into uber_groups(creator_id, meeting_spot, destination, departure_time, max_capacity)
+             values($1, $2, $3, $4, $5) returning id`,
+            [creatorId, meetingSpot.trim(), destination.trim(), departsAt, maxCapacity]
+          )).rows[0];
+
+          await client.query(
+            `insert into uber_group_members(group_id, user_id, role) values($1, $2, 'leader')`,
+            [g.id, creatorId]
+          );
+          await client.query('commit');
+          return this.findById(g.id);
+        } catch (e) {
+          await client.query('rollback');
+          throw e;
+        } finally {
+          client.release();
+        }
+      },
+
+      async findById(id) {
+        const r = (await pool.query(
+          `select g.*,
+            coalesce(
+              json_agg(
+                json_build_object(
+                  'userId', u.id,
+                  'email', u.email,
+                  'displayName', u.display_name,
+                  'role', m.role,
+                  'joinedAt', m.joined_at
+                ) order by m.joined_at asc
+              ) filter (where u.id is not null),
+              '[]'
+            ) as members
+           from uber_groups g
+           left join uber_group_members m on g.id = m.group_id
+           left join users u on m.user_id = u.id
+           where g.id = $1
+           group by g.id`,
+          [id]
+        )).rows[0];
+        return groupRow(r) ?? null;
+      },
+
+      async listActive() {
+        const { rows } = await pool.query(
+          `select g.*,
+            coalesce(
+              json_agg(
+                json_build_object(
+                  'userId', u.id,
+                  'email', u.email,
+                  'displayName', u.display_name,
+                  'role', m.role,
+                  'joinedAt', m.joined_at
+                ) order by m.joined_at asc
+              ) filter (where u.id is not null),
+              '[]'
+            ) as members
+           from uber_groups g
+           left join uber_group_members m on g.id = m.group_id
+           left join users u on m.user_id = u.id
+           where g.status in ('open', 'locked') and g.departure_time > now()
+           group by g.id
+           order by g.departure_time asc
+           limit 100`
+        );
+        return rows.map(groupRow);
+      },
+
+      async join(groupId, userId) {
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          const g = groupRow((await client.query('select * from uber_groups where id=$1 for update', [groupId])).rows[0]);
+          const memberRows = (await client.query('select user_id from uber_group_members where group_id=$1', [groupId])).rows;
+          const verdict = decideJoinGroup({
+            group: g,
+            userId,
+            memberIds: memberRows.map((m) => m.user_id),
+          });
+
+          if (!verdict.ok) {
+            await client.query('rollback');
+            return verdict;
+          }
+
+          await client.query(
+            `insert into uber_group_members(group_id, user_id, role) values($1, $2, 'member')`,
+            [groupId, userId]
+          );
+          if (verdict.willAutoLock) {
+            await client.query(`update uber_groups set status='locked' where id=$1`, [groupId]);
+          }
+          await client.query('commit');
+          return { ok: true, group: await this.findById(groupId) };
+        } catch (e) {
+          await client.query('rollback');
+          throw e;
+        } finally {
+          client.release();
+        }
+      },
+
+      async leave(groupId, userId) {
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          const g = groupRow((await client.query('select * from uber_groups where id=$1 for update', [groupId])).rows[0]);
+          const memberRows = (await client.query(
+            `select user_id as "userId", role, joined_at as "joinedAt"
+             from uber_group_members where group_id=$1 order by joined_at asc`,
+            [groupId]
+          )).rows;
+
+          const verdict = decideLeaveGroup({ group: g, userId, members: memberRows });
+          if (!verdict.ok) {
+            await client.query('rollback');
+            return verdict;
+          }
+
+          await client.query('delete from uber_group_members where group_id=$1 and user_id=$2', [groupId, userId]);
+          if (verdict.nextLeaderId) {
+            await client.query(
+              `update uber_group_members set role='leader' where group_id=$1 and user_id=$2`,
+              [groupId, verdict.nextLeaderId]
+            );
+          }
+          if (g.status !== verdict.nextStatus) {
+            await client.query('update uber_groups set status=$2 where id=$1', [groupId, verdict.nextStatus]);
+          }
+          await client.query('commit');
+          return { ok: true, group: await this.findById(groupId) };
+        } catch (e) {
+          await client.query('rollback');
+          throw e;
+        } finally {
+          client.release();
+        }
+      },
+
+      async lock(groupId, userId) {
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          const g = groupRow((await client.query('select * from uber_groups where id=$1 for update', [groupId])).rows[0]);
+          const memberRows = (await client.query(
+            `select user_id as "userId", role from uber_group_members where group_id=$1`,
+            [groupId]
+          )).rows;
+
+          const verdict = decideLockGroup({ group: g, userId, members: memberRows });
+          if (!verdict.ok) {
+            await client.query('rollback');
+            return verdict;
+          }
+
+          await client.query(`update uber_groups set status='locked' where id=$1`, [groupId]);
+          await client.query('commit');
+          return { ok: true, group: await this.findById(groupId) };
+        } catch (e) {
+          await client.query('rollback');
+          throw e;
+        } finally {
+          client.release();
+        }
+      },
+
+      async updateMeetingSpot(groupId, userId, meetingSpot) {
+        const client = await pool.connect();
+        try {
+          await client.query('begin');
+          const g = groupRow((await client.query('select * from uber_groups where id=$1 for update', [groupId])).rows[0]);
+          const memberRows = (await client.query(
+            `select user_id as "userId", role from uber_group_members where group_id=$1`,
+            [groupId]
+          )).rows;
+
+          const verdict = decideUpdateMeetingSpot({ group: g, userId, members: memberRows, meetingSpot });
+          if (!verdict.ok) {
+            await client.query('rollback');
+            return verdict;
+          }
+
+          await client.query('update uber_groups set meeting_spot=$2 where id=$1', [groupId, meetingSpot.trim()]);
+          await client.query('commit');
+          return { ok: true, group: await this.findById(groupId) };
+        } catch (e) {
+          await client.query('rollback');
+          throw e;
+        } finally {
+          client.release();
+        }
+      },
     },
   };
 }

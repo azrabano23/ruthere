@@ -9,6 +9,8 @@ import MyTrips from './pages/MyTrips.jsx';
 import DriverDashboard from './pages/DriverDashboard.jsx';
 import Profile from './pages/Profile.jsx';
 import LiveNotices from './components/LiveNotices.jsx';
+import Groups from './pages/Groups.jsx';
+import GroupDetail from './pages/GroupDetail.jsx';
 
 export default function App() {
   const [user, setUser] = useState(undefined); // undefined = loading, null = signed out
@@ -33,6 +35,7 @@ export default function App() {
           <button className="theme-toggle" aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`} onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>{theme === 'light' ? '☾' : '☀'}<span>{theme === 'light' ? 'Dark' : 'Light'}</span></button>
           {user ? (<>
             <Link to="/trips">Trips</Link>
+            <Link to="/groups">Uber Groups</Link>
             <Link to="/my-trips">My trips</Link>
             <Link to="/driver-dashboard">Driver Dashboard</Link>
             <Link to="/post">Post a trip</Link>
@@ -47,6 +50,8 @@ export default function App() {
           <Route path="/" element={user ? <Navigate to="/trips" /> : <SignIn onSignedIn={signedIn} />} />
           <Route path="/trips" element={user ? <Trips /> : <Navigate to="/" />} />
           <Route path="/trips/:id" element={user ? <TripDetail user={user} onUserChange={setUser} /> : <Navigate to="/" />} />
+          <Route path="/groups" element={user ? <Groups user={user} /> : <Navigate to="/" />} />
+          <Route path="/groups/:id" element={user ? <GroupDetail user={user} /> : <Navigate to="/" />} />
           <Route path="/my-trips" element={user ? <MyTrips /> : <Navigate to="/" />} />
           <Route path="/profile" element={user ? <Profile user={user} onUserChange={setUser} /> : <Navigate to="/" />} />
           <Route path="/driver-dashboard" element={user ? <DriverDashboard /> : <Navigate to="/" />} />

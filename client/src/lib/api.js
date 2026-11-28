@@ -47,4 +47,14 @@ export const api = {
   report: (body) => call('/trust/reports', { method: 'POST', body }),
   block: (userId) => call('/trust/blocks', { method: 'POST', body: { userId } }),
   unblock: (userId) => call(`/trust/blocks/${userId}`, { method: 'DELETE' }),
+
+  // Shared Uber Groups
+  groups: () => call('/groups'),
+  group: (id) => call(`/groups/${id}`),
+  createGroup: (group) => call('/groups', { method: 'POST', body: group }),
+  joinGroup: (id) => call(`/groups/${id}/join`, { method: 'POST' }),
+  leaveGroup: (id) => call(`/groups/${id}/leave`, { method: 'DELETE' }),
+  lockGroup: (id) => call(`/groups/${id}/lock`, { method: 'PATCH' }),
+  updateGroupMeetingSpot: (id, meetingSpot) =>
+    call(`/groups/${id}/meeting-spot`, { method: 'PATCH', body: { meetingSpot } }),
 };

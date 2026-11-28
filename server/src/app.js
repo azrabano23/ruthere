@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { authRouter } from './routes/auth.js';
 import { tripsRouter } from './routes/trips.js';
+import { groupsRouter } from './routes/groups.js';
 import { pickupSpotsRouter } from './routes/pickupSpots.js';
 import { safetyRouter } from './routes/safety.js';
 import { driversRouter } from './routes/drivers.js';
@@ -40,6 +41,7 @@ export function createApp(store) {
 
   app.use('/auth', authRouter(store));
   app.use('/trips', tripsRouter(store));
+  app.use('/groups', groupsRouter(store));
   app.use('/pickup-spots', pickupSpotsRouter());
   app.use('/safety', safetyRouter(store));
   app.use('/drivers', driversRouter(store));
